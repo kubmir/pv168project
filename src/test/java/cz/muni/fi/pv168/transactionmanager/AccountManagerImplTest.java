@@ -24,6 +24,7 @@ citanie testov predlzene
 
 
 /**
+ * cv03
  * @author Viktória Tóthová
  */
 public class AccountManagerImplTest {
