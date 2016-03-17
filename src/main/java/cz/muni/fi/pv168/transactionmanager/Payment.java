@@ -5,7 +5,6 @@
  */
 package cz.muni.fi.pv168.transactionmanager;
 
-import cz.muni.fi.pv168.transactionmanager.Account;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

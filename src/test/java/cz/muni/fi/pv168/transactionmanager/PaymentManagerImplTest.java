@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package transfersmanager.impl;
+package cz.muni.fi.pv168.transactionmanager;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
