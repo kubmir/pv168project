@@ -1,16 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.muni.fi.pv168.transactionmanager;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
- * Class which represent one payment
+ * This entity class represents Payment.
+ * Payment has id, from Account, to Account, amout and date of payment
  * @author Miroslav Kubus
  */
 public class Payment {
@@ -59,4 +55,51 @@ public class Payment {
     public LocalDate getDate() {
         return this.date;
     }    
+    
+    @Override
+    public String toString() {
+        return "Payment{id = " + this.id + ",from account = " + this.from + ",to account = " 
+                + this.to + ",amount = " + this.amount + ",date = " + this.date + "}";
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        
+        final Payment other = (Payment) obj;
+
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        
+        if (!Objects.equals(this.from, other.from)) {
+            return false;
+        }
+        
+        if (!Objects.equals(this.to, other.to)) {
+            return false;
+        }
+        
+        if (!Objects.equals(this.amount, other.amount)) {
+            return false;
+        }
+        
+        return Objects.equals(this.date, other.date);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 37 * hash + Objects.hashCode(this.id);
+        hash = 37 * hash + Objects.hashCode(this.from);
+        hash = 37 * hash + Objects.hashCode(this.to);
+        hash = 37 * hash + Objects.hashCode(this.amount);
+        hash = 37 * hash + Objects.hashCode(this.date);
+        return hash;
+    }
 }

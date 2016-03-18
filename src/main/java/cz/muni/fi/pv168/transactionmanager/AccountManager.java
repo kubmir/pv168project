@@ -27,7 +27,7 @@ public interface AccountManager {
     
     /**
      * Deletes account from database.
-     * @param account account to be deleted from db.
+     * @param account account to be deleted from database.
      * @throws IllegalArgumentException when account is null or account has null id.
      */
     void deleteAccount(Account account);
@@ -35,7 +35,7 @@ public interface AccountManager {
     /**
      * Returns account with given id. 
      * @param id primary key with requested account.
-     * @return grave with given id or null if such account does not exist.
+     * @return account with given id or null if such account does not exist.
      * @throws IllegalArgumentException when given id is null.
      */
     Account getAccountById(Long id);

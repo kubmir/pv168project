@@ -1,15 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.muni.fi.pv168.transactionmanager;
 
 import java.util.List;
 
 /**
- * Class which implement Payment Manager. Supports creating, updating, getting 
- * and deleting payments from manager
+ * Class which implements Payment Manager. Supports creating, updating, getting 
+ * and deleting payments from manager.
  * @author Miroslav Kubus
  */
 public class PaymentManagerImpl implements PaymentManager {

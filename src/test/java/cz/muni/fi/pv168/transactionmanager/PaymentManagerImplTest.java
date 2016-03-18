@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.muni.fi.pv168.transactionmanager;
 
 import java.math.BigDecimal;
@@ -26,12 +21,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 /**
- *
+ * Tests for class PaymentManagerImpl
  * @author Miroslav Kubus
  */
 public class PaymentManagerImplTest {
     
     private PaymentManagerImpl manager;
+    private AccountManagerImpl accountManager;
     private Account from = null;
     private Account to = null;
     private LocalDate date = null;
@@ -40,8 +36,11 @@ public class PaymentManagerImplTest {
     @Before
     public void setUp() {
         manager = new PaymentManagerImpl();
+        accountManager = new AccountManagerImpl();
         from = newAccount(new Long(1),"111","from",new BigDecimal(1000));
+        accountManager.createAccount(from);
         to = newAccount(new Long(2),"222","to",new BigDecimal(100));
+        accountManager.createAccount(to);
         date = LocalDate.of(2016, 3, 13);
         payment = newPayment(new Long(7),from,to,new BigDecimal(500),date);
     }
@@ -51,14 +50,11 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testCreatePayment() {
-        Long paymentId = payment.getId();
-        assertNotNull(paymentId);
-        
-        Payment resultPayment = manager.getPaymentByID(paymentId);
+        manager.createPayment(payment);
+        Payment resultPayment = manager.getPaymentByID(payment.getId());
         
         assertEquals(resultPayment,payment);
         assertThat(resultPayment,is(not(sameInstance(payment))));
-        
         assertDeepEqualsOfPayment(payment,resultPayment);
     }
     
@@ -85,7 +81,6 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testCreatePaymentWithSameFromToAccount() {
-        payment.setFrom(from);
         payment.setTo(from);
         
         expectedException.expect(IllegalArgumentException.class);
@@ -117,6 +112,14 @@ public class PaymentManagerImplTest {
     }
     
     @Test
+    public void testCreatePaymentWithZeroAmount() {
+        payment.setAmount(new BigDecimal(0));
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createPayment(payment);
+    }
+    
+    @Test
     public void testCreatePaymentWithDateFromPast() {
         LocalDate past = LocalDate.of(5, Month.MARCH, 1999);
         payment.setDate(past);
@@ -138,6 +141,15 @@ public class PaymentManagerImplTest {
         assertEquals(expected, actual);
         assertThat(expected,is(not(sameInstance(actual))));
         assertDeepEqualsOfPayment(expected, actual);       
+    }
+    
+    @Test
+    public void testGetPaymentByIdWIthNonExistentId() {
+        assertTrue(manager.getAllPayments().isEmpty());
+        manager.createPayment(payment);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.getPaymentByID(payment.getId() - 1);
     }
     
     @Test
@@ -174,8 +186,16 @@ public class PaymentManagerImplTest {
         Collections.sort(actual, idComparator);
         
         assertEquals(expected,actual);
-        assertDeepEquals(expected, actual);
+        assertDeepEquals(expected, actual);        
+    }
+    
+    @Test
+    public void testGetPaymentNonExistentFromAccount() {
+        assertTrue(manager.getAllPayments().isEmpty());
+        manager.createPayment(payment);
         
+        expectedException.expect(IllegalArgumentException.class);
+        manager.getPaymentsFromAccount(to);
     }
     
     @Test
@@ -194,7 +214,15 @@ public class PaymentManagerImplTest {
         
         assertEquals(expected,actual);
         assertDeepEquals(expected, actual);
+    }
+    
+    @Test
+    public void testGetPaymentNonExistentToAccount() {
+        assertTrue(manager.getAllPayments().isEmpty());
+        manager.createPayment(payment);
         
+        expectedException.expect(IllegalArgumentException.class);
+        manager.getPaymentsFromAccount(from);
     }
     
     @Test
@@ -322,7 +350,92 @@ public class PaymentManagerImplTest {
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
     }
     
-    //TODO Wrong Arguments of UPDATE
+    @Test (expected = IllegalArgumentException.class)
+    public void testUpdateOfNullPayment() {
+        manager.updatePayment(null);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNegativeId() {
+        manager.createPayment(payment);
+        payment.setId(new Long(-5));
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNullId() {
+        manager.createPayment(payment);
+        payment.setId(null);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNonExistingId() {
+        manager.createPayment(payment);
+        payment.setId(payment.getId() - 1);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNegativeAmount() {
+        manager.createPayment(payment);
+        payment.setAmount(new BigDecimal(-5));
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithZeroAmount() {
+        manager.createPayment(payment);
+        payment.setAmount(new BigDecimal(0));
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithSameFromAndToAccount() {
+        manager.createPayment(payment);
+        payment.setFrom(to);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNullFromAccount() {
+        manager.createPayment(payment);
+        payment.setFrom(null);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNullToAccount() {
+        manager.createPayment(payment);
+        payment.setTo(null);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
+    @Test
+    public void testUpdateOfPaymentWithNullDate() {
+        manager.createPayment(payment);
+        payment.setDate(null);
+        
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePayment(payment);
+    }
+    
     
     private static Payment newPayment(Long id, Account from, Account to, BigDecimal amount, LocalDate date) {
         Payment payment = new Payment();
@@ -346,28 +459,24 @@ public class PaymentManagerImplTest {
     }
     
     private static void assertDeepEqualsOfPayment(Payment expected, Payment actual) {
-       //Deep test of parameters of payment
        assertEquals(expected.getId(),actual.getId());
        assertEquals(expected.getAmount(),actual.getAmount());
        assertEquals(expected.getDate(),actual.getDate());
        assertEquals(expected.getFrom(),actual.getFrom());
        assertEquals(expected.getTo(),actual.getTo());
        
-       //Deep test of parameters of account
        assertDeepEqualsOfAccounts(expected.getFrom(),actual.getFrom());
        assertDeepEqualsOfAccounts(expected.getTo(),actual.getTo());
         
     }
     
     private static void assertDeepEqualsOfAccounts(Account expected, Account actual) {
-        //Deep test of parameters of account
         assertEquals(expected.getId(),actual.getId());
         assertEquals(expected.getNumber(),actual.getNumber());
         assertEquals(expected.getHolder(),actual.getHolder());
         assertEquals(expected.getBalance(),actual.getBalance());
     }
     
-    //Deep test for each payment in List
     private void assertDeepEquals(List<Payment> expectedList, List<Payment> actualList) {
         for (int i = 0; i < expectedList.size(); i++) {
             Payment expected = expectedList.get(i);
@@ -376,7 +485,6 @@ public class PaymentManagerImplTest {
         }
     }
     
-    //Comparator for test which use List of payments
     private static Comparator<Payment> idComparator = new Comparator<Payment>() {
         @Override
         public int compare(Payment o1, Payment o2) {
