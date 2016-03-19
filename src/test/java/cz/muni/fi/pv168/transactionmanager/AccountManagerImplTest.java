@@ -1,14 +1,19 @@
 package cz.muni.fi.pv168.transactionmanager;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.sql.DataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
@@ -25,11 +30,36 @@ citanie testov predlzene
 public class AccountManagerImplTest {
     
     private AccountManagerImpl manager;
+    private DataSource dataSource;
     
     @Before
-    public void setUp() {
-        manager = new AccountManagerImpl();
+    public void setUp() throws SQLException {
+        dataSource = prepareDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("CREATE TABLE ACCOUNT ("
+                    + "id bigint primary key generated always as identity,"
+                    + "number varchar(255),"
+                    + "holder varchar(255),"
+                    + "balance decimal)").executeUpdate();
+        }
+        manager = new AccountManagerImpl(dataSource);
     }
+    
+    @After
+    public void tearDown() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("DROP TABLE ACCOUNT").executeUpdate();
+        }
+    }
+
+    private static DataSource prepareDataSource() throws SQLException {
+        EmbeddedDataSource ds = new EmbeddedDataSource();
+        //we will use in memory database
+        ds.setDatabaseName("memory:accountmgr-test");
+        ds.setCreateDatabase("create");
+        return ds;
+    }
+
     
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -91,6 +121,7 @@ public class AccountManagerImplTest {
         manager.createAccount(account);
     }
     
+    //?
     @Test
     public void testCreateAccIllegalFormatOfNumber() {
         Account account = newAccount("asd", "1", BigDecimal.ZERO);        

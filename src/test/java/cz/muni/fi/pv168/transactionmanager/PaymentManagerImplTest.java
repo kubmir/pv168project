@@ -1,12 +1,15 @@
 package cz.muni.fi.pv168.transactionmanager;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.sql.DataSource;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -19,6 +22,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.apache.derby.jdbc.EmbeddedDataSource;
+import org.junit.After;
+
+
 
 /**
  * Tests for class PaymentManagerImpl
@@ -32,17 +39,44 @@ public class PaymentManagerImplTest {
     private Account to = null;
     private LocalDate date = null;
     private Payment payment = null;
+    private DataSource dataSource;
     
     @Before
-    public void setUp() {
-        manager = new PaymentManagerImpl();
-        accountManager = new AccountManagerImpl();
-        from = newAccount(new Long(1),"111","from",new BigDecimal(1000));
+    public void setUp() throws SQLException {
+        dataSource = prepareDataSource();
+        //CHYBY V CREATE TABLE, PROBLEMY SO ZALOZENIM DATABAZY, CELE ZLE
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("CREATE TABLE PAYMENTS ("
+                    + "id bigint primary key generated always as identity,"
+                    + "from ,"
+                    + "to ,"
+                    + "amount ,"
+                    + "date DATE)").executeUpdate();
+        }
+        manager = new PaymentManagerImpl(dataSource);
+        accountManager = new AccountManagerImpl(dataSource);
+        from = newAccount("111","from",new BigDecimal(1000));
         accountManager.createAccount(from);
-        to = newAccount(new Long(2),"222","to",new BigDecimal(100));
+        to = newAccount("222","to",new BigDecimal(100));
         accountManager.createAccount(to);
         date = LocalDate.of(2016, 3, 13);
-        payment = newPayment(new Long(7),from,to,new BigDecimal(500),date);
+        payment = newPayment(from,to,new BigDecimal(500),date);
+    }
+    
+    @After
+    public void tearDown() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("DROP TABLE PAYMENTS").executeUpdate();
+        }
+    }
+
+    
+     private static DataSource prepareDataSource() throws SQLException {
+        EmbeddedDataSource ds = new EmbeddedDataSource();
+        //we will use in memory database
+        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setCreateDatabase("create");
+        return ds;
     }
     
     @Rule
@@ -64,21 +98,13 @@ public class PaymentManagerImplTest {
     }
     
     @Test
-    public void testCreatePaymentWithNegativeId() {
-        payment.setId(new Long(-5));
+    public void testCreatePaymentWithExistingId() {
+        payment.setId(new Long(5));
         
         expectedException.expect(IllegalArgumentException.class);
         manager.createPayment(payment);
     }
-    
-    @Test
-    public void testCreatePaymentWithNullId() {
-        payment.setId(null);
-        
-        expectedException.expect(IllegalArgumentException.class);
-        manager.createPayment(payment);
-    }
-    
+       
     @Test
     public void testCreatePaymentWithSameFromToAccount() {
         payment.setTo(from);
@@ -130,7 +156,7 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testGetPaymentByID() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(1000),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
@@ -148,7 +174,7 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.getPaymentByID(payment.getId() - 1);
     }
     
@@ -156,7 +182,7 @@ public class PaymentManagerImplTest {
     public void testGetAllPayments() {
         assertTrue(manager.getAllPayments().isEmpty());
 
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(1000),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
@@ -175,7 +201,7 @@ public class PaymentManagerImplTest {
     public void testGetPaymentsFromAccount() {
         assertTrue(manager.getAllPayments().isEmpty());
 
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(1000),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
@@ -194,7 +220,7 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.getPaymentsFromAccount(to);
     }
     
@@ -202,7 +228,7 @@ public class PaymentManagerImplTest {
     public void testGetPaymentsToAcoount() {
         assertTrue(manager.getAllPayments().isEmpty());
            
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(1000),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
@@ -221,13 +247,13 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(IllegalArgumentException.class);
-        manager.getPaymentsFromAccount(from);
+        expectedException.expect(EntityNotFoundException.class);
+        manager.getPaymentsToAcoount(from);
     }
     
     @Test
     public void testDeletePayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(1000),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
@@ -255,39 +281,23 @@ public class PaymentManagerImplTest {
     }
     
     @Test
-    public void testDeletePaymentWithNegativeId() {
-       payment.setId(new Long(-5));
+    public void testDeletePaymentWithNonExistentId() {
+       payment.setId(payment.getId() - 1);
        
-       expectedException.expect(IllegalArgumentException.class);
+       expectedException.expect(EntityNotFoundException.class);
        manager.deletePayment(payment);
     }
     
     @Test
-    public void testUpdateIdOfPayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(7989),date);
-        manager.createPayment(paymentB);
-        
-        payment.setId(new Long(777));
-        manager.updatePayment(payment);
-        assertEquals(payment.getId(),new Long(777));
-        assertEquals(payment.getFrom(),from);
-        assertEquals(payment.getTo(),to);
-        assertEquals(payment.getAmount(),500);
-        assertEquals(payment.getDate(),date);
-
-        assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
-    }
-    
-    @Test
     public void testUpdateFromAccountOfPayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(7989),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
-        Account helpAccount = newAccount(new Long(9),"444","help",new BigDecimal(9999));
+        Account helpAccount = newAccount("444","help",new BigDecimal(9999));
         
+        payment = manager.getPaymentByID(id);
         payment.setFrom(helpAccount);
         manager.updatePayment(payment);
-        assertEquals(payment.getId(),id);
         assertEquals(payment.getFrom(),helpAccount);
         assertEquals(payment.getTo(),to);
         assertEquals(payment.getAmount(),500);
@@ -298,14 +308,14 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testUpdateToAccountOfPayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(7989),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
-        Account helpAccount = newAccount(new Long(9),"444","help",new BigDecimal(9999));
+        Account helpAccount = newAccount("444","help",new BigDecimal(9999));
         
+        payment = manager.getPaymentByID(id);
         payment.setTo(helpAccount);
         manager.updatePayment(payment);
-        assertEquals(payment.getId(),id);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),helpAccount);
         assertEquals(payment.getAmount(),500);
@@ -316,14 +326,14 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testUpdateAmountOfPayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(7989),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
         BigDecimal newAmount = new BigDecimal(5000);
         
+        payment = manager.getPaymentByID(id);
         payment.setAmount(newAmount);
         manager.updatePayment(payment);
-        assertEquals(payment.getId(),id);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
         assertEquals(payment.getAmount(),newAmount);
@@ -334,14 +344,14 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testUpdateDateOfPayment() {
-        Payment paymentB = newPayment(new Long(8),to,from,new BigDecimal(7989),date);
+        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
         LocalDate newDate = LocalDate.of(5, Month.SEPTEMBER, 2016);
         
+        payment = manager.getPaymentByID(id);
         payment.setDate(newDate);
         manager.updatePayment(payment);
-        assertEquals(payment.getId(),id);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
         assertEquals(payment.getAmount(),500);
@@ -354,16 +364,7 @@ public class PaymentManagerImplTest {
     public void testUpdateOfNullPayment() {
         manager.updatePayment(null);
     }
-    
-    @Test
-    public void testUpdateOfPaymentWithNegativeId() {
-        manager.createPayment(payment);
-        payment.setId(new Long(-5));
         
-        expectedException.expect(IllegalArgumentException.class);
-        manager.updatePayment(payment);
-    }
-    
     @Test
     public void testUpdateOfPaymentWithNullId() {
         manager.createPayment(payment);
@@ -378,7 +379,7 @@ public class PaymentManagerImplTest {
         manager.createPayment(payment);
         payment.setId(payment.getId() - 1);
         
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.updatePayment(payment);
     }
     
@@ -437,9 +438,8 @@ public class PaymentManagerImplTest {
     }
     
     
-    private static Payment newPayment(Long id, Account from, Account to, BigDecimal amount, LocalDate date) {
+    private static Payment newPayment(Account from, Account to, BigDecimal amount, LocalDate date) {
         Payment payment = new Payment();
-        payment.setId(id);
         payment.setFrom(from);
         payment.setTo(to);
         payment.setAmount(amount);
@@ -448,9 +448,8 @@ public class PaymentManagerImplTest {
         return payment;
     }
     
-    private static Account newAccount(Long id, String number, String holder, BigDecimal balance) {
+    private static Account newAccount(String number, String holder, BigDecimal balance) {
         Account account = new Account();
-        account.setId(id);
         account.setNumber(number);
         account.setHolder(holder);
         account.setBalance(balance);
