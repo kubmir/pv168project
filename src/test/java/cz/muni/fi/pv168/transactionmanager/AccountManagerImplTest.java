@@ -17,14 +17,9 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
-/*
-nepisat chybove hlasky - udrziavanie testov (zmena testu -> zmena hlasky)
-citanie testov predlzene
-*/
-
-
 /**
- * cv03
+ * Tests for class AccountManagerImpl
+ * 
  * @author Viktória Tóthová
  */
 public class AccountManagerImplTest {
@@ -40,7 +35,7 @@ public class AccountManagerImplTest {
                     + "id bigint primary key generated always as identity,"
                     + "number varchar(255),"
                     + "holder varchar(255),"
-                    + "balance decimal)").executeUpdate();
+                    + "balance decimal(12,4))").executeUpdate();
         }
         manager = new AccountManagerImpl(dataSource);
     }
@@ -54,7 +49,6 @@ public class AccountManagerImplTest {
 
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        //we will use in memory database
         ds.setDatabaseName("memory:accountmgr-test");
         ds.setCreateDatabase("create");
         return ds;
@@ -82,8 +76,7 @@ public class AccountManagerImplTest {
         manager.createAccount(account);       
         
         Account result = manager.getAccountById(account.getId());
-        //loaded instance should be equal to the saved one
-        assertThat("loaded account is not equal to the saved one", result, is(equalTo(account)));
+        assertThat(result, is(equalTo(account)));
     }
     
     @Test
@@ -92,8 +85,7 @@ public class AccountManagerImplTest {
         manager.createAccount(account);
         
         Account result = manager.getAccountById(account.getId());
-        //but it should be another instance
-        assertThat("loaded account is same instatance", account, is(not(sameInstance(account))));
+        assertThat(result, is(not(sameInstance(account))));
     }
     
     @Test
@@ -102,7 +94,6 @@ public class AccountManagerImplTest {
         manager.createAccount(account);
                 
         Account result = manager.getAccountById(account.getId());
-        //assert atributes. bypasses potentially broken equals methed
         assertDeepEquals(account, result);        
     }
     
@@ -144,6 +135,17 @@ public class AccountManagerImplTest {
     }
     
     @Test
+    public void testCreateAccWithDecimalBalance() {        
+        Account account = newAccount("1", "Holder", BigDecimal.valueOf(500.56));
+        manager.createAccount(account);
+        Account fromDB = manager.getAccountById(account.getId());
+
+        assertEquals(account,fromDB);
+        assertThat(account,is(not(sameInstance(fromDB))));
+        assertDeepEquals(account, fromDB);    
+    }
+    
+    @Test
     public void testUpdateChangeNumber() {
         Account account = newAccount("1", "a", BigDecimal.ZERO);
         manager.createAccount(account);
@@ -154,7 +156,7 @@ public class AccountManagerImplTest {
         account = manager.getAccountById(graveId);
         assertEquals("10", account.getNumber());
         assertEquals("a", account.getHolder());
-        assertEquals(BigDecimal.ZERO, account.getBalance());
+        assertTrue(account.getBalance().compareTo(BigDecimal.ZERO) == 0);     
     }
     
     @Test
@@ -168,21 +170,21 @@ public class AccountManagerImplTest {
         account = manager.getAccountById(graveId);
         assertEquals("10", account.getNumber());
         assertEquals("asd", account.getHolder());
-        assertEquals(BigDecimal.ZERO, account.getBalance());
+        assertTrue(account.getBalance().compareTo(BigDecimal.ZERO) == 0);     
     }
     
     @Test
     public void testUpdateChangeBalance() {
         Account account = newAccount("10", "asd", BigDecimal.ZERO);
         manager.createAccount(account);
-        Long graveId = account.getId();
+        Long accountId = account.getId();
                 
         account.setBalance(BigDecimal.valueOf(100.01));
         manager.updateAccount(account);
-        account = manager.getAccountById(graveId);
+        account = manager.getAccountById(accountId);
         assertEquals("10", account.getNumber());
-        assertEquals("a", account.getHolder());
-        assertEquals(BigDecimal.valueOf(100.01), account.getBalance());   
+        assertEquals("asd", account.getHolder());
+        assertTrue(account.getBalance().compareTo(BigDecimal.valueOf(100.01)) == 0);     
     }
 
     @Test
@@ -193,15 +195,13 @@ public class AccountManagerImplTest {
         manager.createAccount(acc2);
         Long graveId = account.getId();
                 
-        //change balance value to 100.01
         account.setBalance(BigDecimal.valueOf(100.01));
         manager.updateAccount(account);
         account = manager.getAccountById(graveId);
         assertEquals("10", account.getNumber());
-        assertEquals("a", account.getHolder());
-        assertEquals(BigDecimal.valueOf(100.01), account.getBalance());     
+        assertEquals("asd", account.getHolder());
+        assertTrue(BigDecimal.valueOf(100.01).compareTo(account.getBalance()) == 0);     
         
-        //check if changes didn't affect other values
         assertDeepEquals(acc2, manager.getAccountById(acc2.getId()));
     }
     
@@ -227,7 +227,7 @@ public class AccountManagerImplTest {
         Long accountId = account.getId();        
         account = manager.getAccountById(accountId);
         account.setId(accountId - 1);        
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.updateAccount(account);
     }
     
@@ -292,10 +292,10 @@ public class AccountManagerImplTest {
     }
     
     @Test
-    public void testDeleteAccSetId() {
+    public void testDeleteAccWithNonExistingId() {
         Account account = newAccount("1", "1", BigDecimal.ZERO);
         account.setId(1L);
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.deleteAccount(account);
     }
     
@@ -318,28 +318,26 @@ public class AccountManagerImplTest {
         Collections.sort(actual, idComp);
         Collections.sort(expected, idComp);
         
-        assertEquals("saved and expected differs", expected, actual);
+        assertEquals(expected, actual);
         assertDeepEquals(expected, actual);
     }
     
     class idComparator implements Comparator<Account> {
-
         @Override
         public int compare(Account o1, Account o2) {
             return o1.getId().compareTo(o2.getId());
         }
-        
     }
             
     private void assertDeepEquals(Account expected, Account actual) {
-        assertEquals("id value is not equal", expected.getId(), actual);
-        assertEquals("number value is not equal", expected.getNumber(), actual.getNumber());
-        assertEquals("holder value isnot equal", expected.getHolder(), actual.getHolder());
-        assertEquals("balance value is not equal", expected.getBalance(), actual.getBalance());
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getNumber(), actual.getNumber());
+        assertEquals(expected.getHolder(), actual.getHolder());
+        assertTrue(expected.getBalance().compareTo(actual.getBalance()) == 0);     
     }
     
     private void assertDeepEquals(List<Account> expectedList, List<Account> actualList) {
-        assertEquals("different number of accounts", expectedList.size(), actualList.size());
+        assertEquals(expectedList.size(), actualList.size());
         
         for (int i = 0; i < expectedList.size(); ++i) {
             Account expected = expectedList.get(i);

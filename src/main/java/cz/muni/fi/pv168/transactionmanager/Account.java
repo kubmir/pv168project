@@ -87,7 +87,7 @@ public class Account {
         if (!Objects.equals(this.holder, other.holder)) {
             return false;
         }
-        if (!Objects.equals(this.balance, other.balance)) {
+        if (this.balance.compareTo(other.balance) != 0) {
             return false;
         }
         return true;

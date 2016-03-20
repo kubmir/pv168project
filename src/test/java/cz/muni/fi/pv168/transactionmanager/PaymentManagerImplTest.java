@@ -29,7 +29,7 @@ import org.junit.After;
 
 /**
  * Tests for class PaymentManagerImpl
- * @author Miroslav Kubus
+ * @author Viktória Tóthová, Miroslav Kubus
  */
 public class PaymentManagerImplTest {
     
@@ -47,10 +47,10 @@ public class PaymentManagerImplTest {
         //CHYBY V CREATE TABLE, PROBLEMY SO ZALOZENIM DATABAZY, CELE ZLE
         try (Connection connection = dataSource.getConnection()) {
             connection.prepareStatement("CREATE TABLE PAYMENTS ("
-                    + "id bigint primary key generated always as identity,"
-                    + "from ,"
-                    + "to ,"
-                    + "amount ,"
+                    + "id BIGINT primary key generated always as identity,"
+                    + "from BIGINT REFERENCES accounts (id) ,"
+                    + "to BIGINT REFERENCES accounts(id),"
+                    + "amount DECIMAL,"
                     + "date DATE)").executeUpdate();
         }
         manager = new PaymentManagerImpl(dataSource);
