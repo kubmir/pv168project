@@ -3,7 +3,9 @@ package cz.muni.fi.pv168.transactionmanager;
 import java.sql.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+
 import javax.sql.DataSource;
 
 /**
@@ -14,9 +16,11 @@ import javax.sql.DataSource;
 public class PaymentManagerImpl implements PaymentManager {
 
     private final DataSource dataSource;
+    private final AccountManagerImpl accountManager;
     
-    public PaymentManagerImpl(DataSource dataSource) {
+    public PaymentManagerImpl(DataSource dataSource, AccountManagerImpl manager) {
         this.dataSource = dataSource;
+        this.accountManager = manager;
     }
     
     @Override
@@ -29,13 +33,14 @@ public class PaymentManagerImpl implements PaymentManager {
         
         try ( Connection connection = dataSource.getConnection();
               PreparedStatement st = connection.prepareStatement(
-                "INSERT INTO PAYMENTS (from,to,amount,date) VALUES (?,?,?,?)",
+                "INSERT INTO payment (fromAccount,toAccount,amount,date) VALUES (?,?,?,?)",
                 Statement.RETURN_GENERATED_KEYS)) {
         
-            st.setObject(1,payment.getFrom());
-            st.setObject(2,payment.getTo());
+            st.setLong(1,payment.getFrom().getId());
+            st.setLong(2,payment.getTo().getId());
             st.setBigDecimal(3,payment.getAmount());
-            st.setObject(4,payment.getDate(),Types.DATE);
+            st.setDate(4,Date.valueOf(payment.getDate()));
+            
             int added = st.executeUpdate();
             
             if(added != 1) {
@@ -47,13 +52,21 @@ public class PaymentManagerImpl implements PaymentManager {
             payment.setId(getKey(keyRS, payment));
 
         } catch(SQLException ex) {
-            throw new ServiceFailureException("Error when inserting payment " + payment, ex);
+            throw new ServiceFailureException("Error when inserting payment " + payment + ex.getLocalizedMessage());
         }
     }
     
     private void validate(Payment payment) throws IllegalArgumentException {
         if(payment == null) {
             throw new IllegalArgumentException("Payment is null");
+        }
+        
+        if(payment.getFrom() == null) {
+            throw new IllegalArgumentException("Null fromAccount of payment");
+        }
+        
+        if(payment.getTo() == null) {
+            throw new IllegalArgumentException("Null toAccount of payment");
         }
         
         if(payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -95,32 +108,105 @@ public class PaymentManagerImpl implements PaymentManager {
     
     @Override
     public void updatePayment(Payment payment) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void deletePayment(Payment payment) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+        validate(payment);
+        
+        if(payment.getId() == null) {
+            throw new IllegalArgumentException("Null id of payment for deleting");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement("DELETE FROM payment WHERE id = ?")) {
+            
+            st.setLong(1,payment.getId());
+            
+            int removed = st.executeUpdate();
+            
+            if(removed == 0) {
+                throw new EntityNotFoundException(payment + " was not find in database");
+            }
+            
+            if(removed != 1) {
+                throw new ServiceFailureException("Invalid deleted rows count detected: " + removed);
+            }
+            
+        } catch (SQLException ex) {
+            throw new ServiceFailureException("Error while deleting payment " + payment,ex);
+        }
+    }       
 
     @Override
     public Payment getPaymentByID(Long id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        if(id == null) {
+            throw new IllegalArgumentException("Null id of payment in getPaymentByID");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(
+                "SELECT * FROM payment WHERE id = ?")) {
+            
+            st.setLong(1,id);
+            ResultSet rs = st.executeQuery();
+            
+            if(rs.next()) {
+                Payment payment = resultSetToPayment(rs);
+                
+                if (rs.next()) {
+                    throw new ServiceFailureException("Internal error: More entities with the same id found "
+                            + "(source id: " + id + ", found " + payment + " and " + resultSetToPayment(rs));
+                }
+                
+                return payment;
+            } else {
+                return null;
+            }   
+        } catch (SQLException ex) {
+            throw new ServiceFailureException("Error while getting payment with id " + id, ex);
+        }
+    }
+    
+    private Payment resultSetToPayment(ResultSet rs) throws SQLException {
+        Payment payment = new Payment();
+        
+        payment.setAmount(rs.getBigDecimal("amount"));
+        payment.setId(rs.getLong("id"));
+        payment.setFrom(accountManager.getAccountById(rs.getLong("fromAccount")));
+        payment.setTo(accountManager.getAccountById(rs.getLong("toAccount")));
+        payment.setDate(rs.getDate("date").toLocalDate());
+        
+        return payment;
     }
 
     @Override
     public List<Payment> getAllPayments() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement("SELECT * FROM payment")) {
+            List<Payment> toReturn = new ArrayList<>();
+            ResultSet rs = st.executeQuery();
+            
+            while(rs.next()) {
+                toReturn.add(resultSetToPayment(rs));
+            }
+            
+            return toReturn;
+        } catch (SQLException ex) {
+            throw new ServiceFailureException("Error while getting all payments from database", ex);
+        }
     }
 
     @Override
     public List<Payment> getPaymentsFromAccount(Account account) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public List<Payment> getPaymentsToAcoount(Account account) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
-    
 }

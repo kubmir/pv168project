@@ -1,5 +1,6 @@
 package cz.muni.fi.pv168.transactionmanager;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**

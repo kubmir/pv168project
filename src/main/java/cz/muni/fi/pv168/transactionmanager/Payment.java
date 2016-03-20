@@ -84,8 +84,8 @@ public class Payment {
         if (!Objects.equals(this.to, other.to)) {
             return false;
         }
-        
-        if (!Objects.equals(this.amount, other.amount)) {
+
+        if (this.amount.compareTo(other.amount) != 0) {
             return false;
         }
         

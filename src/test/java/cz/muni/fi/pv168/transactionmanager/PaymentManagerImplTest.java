@@ -41,32 +41,44 @@ public class PaymentManagerImplTest {
     private Payment payment = null;
     private DataSource dataSource;
     
+    
     @Before
     public void setUp() throws SQLException {
         dataSource = prepareDataSource();
-        //CHYBY V CREATE TABLE, PROBLEMY SO ZALOZENIM DATABAZY, CELE ZLE
+        
         try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("CREATE TABLE PAYMENTS ("
-                    + "id BIGINT primary key generated always as identity,"
-                    + "from BIGINT REFERENCES accounts (id) ,"
-                    + "to BIGINT REFERENCES accounts(id),"
-                    + "amount DECIMAL,"
-                    + "date DATE)").executeUpdate();
+            connection.prepareStatement("CREATE TABLE account ("
+                    + "id bigint primary key generated always as identity,"
+                    + "number varchar(255),"
+                    + "holder varchar(255),"
+                    + "balance decimal(12,4))").executeUpdate();
         }
-        manager = new PaymentManagerImpl(dataSource);
+        
         accountManager = new AccountManagerImpl(dataSource);
         from = newAccount("111","from",new BigDecimal(1000));
         accountManager.createAccount(from);
         to = newAccount("222","to",new BigDecimal(100));
         accountManager.createAccount(to);
-        date = LocalDate.of(2016, 3, 13);
+        
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("CREATE TABLE payment ("
+                    + "id BIGINT primary key generated always as identity,"
+                    + "fromAccount BIGINT REFERENCES account(id),"
+                    + "toAccount BIGINT REFERENCES account(id),"
+                    + "amount DECIMAL(12,4),"
+                    + "date DATE)").executeUpdate();
+        }
+        
+        manager = new PaymentManagerImpl(dataSource,accountManager);
+        date = LocalDate.of(2016, 3, 23);
         payment = newPayment(from,to,new BigDecimal(500),date);
     }
     
     @After
     public void tearDown() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("DROP TABLE PAYMENTS").executeUpdate();
+            connection.prepareStatement("DROP TABLE payment").executeUpdate();
+            connection.prepareStatement("DROP TABLE account").executeUpdate();
         }
     }
 
@@ -74,7 +86,7 @@ public class PaymentManagerImplTest {
      private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
         //we will use in memory database
-        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setDatabaseName("memory:paymentmanager-test");
         ds.setCreateDatabase("create");
         return ds;
     }
@@ -131,7 +143,7 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testCreatePaymentWithNegativeAmount() {
-        payment.setAmount(new BigDecimal(-5000));
+        payment.setAmount(BigDecimal.valueOf(-5000));
         
         expectedException.expect(IllegalArgumentException.class);
         manager.createPayment(payment);
@@ -139,7 +151,7 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testCreatePaymentWithZeroAmount() {
-        payment.setAmount(new BigDecimal(0));
+        payment.setAmount(BigDecimal.valueOf(0));
         
         expectedException.expect(IllegalArgumentException.class);
         manager.createPayment(payment);
@@ -147,7 +159,7 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testCreatePaymentWithDateFromPast() {
-        LocalDate past = LocalDate.of(5, Month.MARCH, 1999);
+        LocalDate past = LocalDate.of(1999, Month.MARCH, 25);
         payment.setDate(past);
         
         expectedException.expect(IllegalArgumentException.class);
@@ -174,8 +186,7 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(EntityNotFoundException.class);
-        manager.getPaymentByID(payment.getId() - 1);
+        assertNull(manager.getPaymentByID(payment.getId() - 1));
     }
     
     @Test
@@ -282,7 +293,7 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testDeletePaymentWithNonExistentId() {
-       payment.setId(payment.getId() - 1);
+       payment.setId(1L);
        
        expectedException.expect(EntityNotFoundException.class);
        manager.deletePayment(payment);
@@ -300,7 +311,7 @@ public class PaymentManagerImplTest {
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),helpAccount);
         assertEquals(payment.getTo(),to);
-        assertEquals(payment.getAmount(),500);
+        assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
         assertEquals(payment.getDate(),date);
 
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
@@ -318,7 +329,7 @@ public class PaymentManagerImplTest {
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),helpAccount);
-        assertEquals(payment.getAmount(),500);
+        assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
         assertEquals(payment.getDate(),date);
 
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
@@ -329,14 +340,14 @@ public class PaymentManagerImplTest {
         Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
-        BigDecimal newAmount = new BigDecimal(5000);
+        BigDecimal newAmount = BigDecimal.valueOf(5000);
         
         payment = manager.getPaymentByID(id);
         payment.setAmount(newAmount);
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
-        assertEquals(payment.getAmount(),newAmount);
+        assertTrue((payment.getAmount().compareTo(newAmount)) == 0);     
         assertEquals(payment.getDate(),date);
 
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
@@ -347,14 +358,14 @@ public class PaymentManagerImplTest {
         Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
         manager.createPayment(paymentB);
         Long id = payment.getId();
-        LocalDate newDate = LocalDate.of(5, Month.SEPTEMBER, 2016);
+        LocalDate newDate = LocalDate.of(2016, Month.SEPTEMBER, 5);
         
         payment = manager.getPaymentByID(id);
         payment.setDate(newDate);
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
-        assertEquals(payment.getAmount(),500);
+        assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
         assertEquals(payment.getDate(),newDate);
         
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
@@ -459,7 +470,7 @@ public class PaymentManagerImplTest {
     
     private static void assertDeepEqualsOfPayment(Payment expected, Payment actual) {
        assertEquals(expected.getId(),actual.getId());
-       assertEquals(expected.getAmount(),actual.getAmount());
+       assertTrue(expected.getAmount().compareTo(actual.getAmount()) == 0);     
        assertEquals(expected.getDate(),actual.getDate());
        assertEquals(expected.getFrom(),actual.getFrom());
        assertEquals(expected.getTo(),actual.getTo());
@@ -473,7 +484,7 @@ public class PaymentManagerImplTest {
         assertEquals(expected.getId(),actual.getId());
         assertEquals(expected.getNumber(),actual.getNumber());
         assertEquals(expected.getHolder(),actual.getHolder());
-        assertEquals(expected.getBalance(),actual.getBalance());
+        assertTrue(expected.getBalance().compareTo(actual.getBalance()) == 0);     
     }
     
     private void assertDeepEquals(List<Payment> expectedList, List<Payment> actualList) {
