@@ -293,7 +293,8 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testDeletePaymentWithNonExistentId() {
-       payment.setId(1L);
+       manager.createPayment(payment);
+       payment.setId(payment.getId() + 1);
        
        expectedException.expect(EntityNotFoundException.class);
        manager.deletePayment(payment);
@@ -301,14 +302,18 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testUpdateFromAccountOfPayment() {
-        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
+        Payment paymentB = newPayment(to,from,BigDecimal.valueOf(7989),date);
+        Account helpAccount = newAccount("444","help",BigDecimal.valueOf(9999));
+
+        manager.createPayment(payment);
         manager.createPayment(paymentB);
+        accountManager.createAccount(helpAccount);
+
         Long id = payment.getId();
-        Account helpAccount = newAccount("444","help",new BigDecimal(9999));
-        
         payment = manager.getPaymentByID(id);
         payment.setFrom(helpAccount);
         manager.updatePayment(payment);
+        
         assertEquals(payment.getFrom(),helpAccount);
         assertEquals(payment.getTo(),to);
         assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
@@ -320,11 +325,15 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateToAccountOfPayment() {
         Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
-        manager.createPayment(paymentB);
-        Long id = payment.getId();
         Account helpAccount = newAccount("444","help",new BigDecimal(9999));
         
+        manager.createPayment(payment);
+        manager.createPayment(paymentB);
+        accountManager.createAccount(helpAccount);
+        
+        Long id = payment.getId();
         payment = manager.getPaymentByID(id);
+
         payment.setTo(helpAccount);
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),from);
@@ -338,13 +347,13 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateAmountOfPayment() {
         Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
+        manager.createPayment(payment);
         manager.createPayment(paymentB);
-        Long id = payment.getId();
-        BigDecimal newAmount = BigDecimal.valueOf(5000);
         
-        payment = manager.getPaymentByID(id);
+        BigDecimal newAmount = BigDecimal.valueOf(5000);
         payment.setAmount(newAmount);
         manager.updatePayment(payment);
+
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
         assertTrue((payment.getAmount().compareTo(newAmount)) == 0);     
@@ -356,11 +365,13 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateDateOfPayment() {
         Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
+        manager.createPayment(payment);
         manager.createPayment(paymentB);
-        Long id = payment.getId();
         LocalDate newDate = LocalDate.of(2016, Month.SEPTEMBER, 5);
-        
+
+        Long id = payment.getId();
         payment = manager.getPaymentByID(id);
+
         payment.setDate(newDate);
         manager.updatePayment(payment);
         assertEquals(payment.getFrom(),from);
@@ -388,7 +399,7 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateOfPaymentWithNonExistingId() {
         manager.createPayment(payment);
-        payment.setId(payment.getId() - 1);
+        payment.setId(payment.getId() + 1);
         
         expectedException.expect(EntityNotFoundException.class);
         manager.updatePayment(payment);
@@ -397,7 +408,7 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateOfPaymentWithNegativeAmount() {
         manager.createPayment(payment);
-        payment.setAmount(new BigDecimal(-5));
+        payment.setAmount(BigDecimal.valueOf(-5));
         
         expectedException.expect(IllegalArgumentException.class);
         manager.updatePayment(payment);
@@ -406,7 +417,7 @@ public class PaymentManagerImplTest {
     @Test
     public void testUpdateOfPaymentWithZeroAmount() {
         manager.createPayment(payment);
-        payment.setAmount(new BigDecimal(0));
+        payment.setAmount(BigDecimal.valueOf(0));
         
         expectedException.expect(IllegalArgumentException.class);
         manager.updatePayment(payment);

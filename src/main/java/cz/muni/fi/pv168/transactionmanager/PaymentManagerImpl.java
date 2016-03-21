@@ -69,6 +69,10 @@ public class PaymentManagerImpl implements PaymentManager {
             throw new IllegalArgumentException("Null toAccount of payment");
         }
         
+        if(payment.getDate() == null) {
+            throw new IllegalArgumentException("Null date of payment");
+        }
+        
         if(payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Negative or zero amount of payment");
         }
@@ -108,7 +112,36 @@ public class PaymentManagerImpl implements PaymentManager {
     
     @Override
     public void updatePayment(Payment payment) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        validate(payment);
+        
+        if(payment.getId() == null) {
+            throw new IllegalArgumentException("Null id of payment to update");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(
+                "UPDATE payment SET fromAccount = ?, toAccount = ? , amount = ?, date = ? WHERE id = ?")) {
+            
+            st.setLong(1, payment.getFrom().getId());
+            st.setLong(2, payment.getTo().getId());
+            st.setBigDecimal(3, payment.getAmount());
+            st.setDate(4, Date.valueOf(payment.getDate()));
+            st.setLong(5, payment.getId());
+            
+            int updated = st.executeUpdate();
+            
+            if(updated == 0) {
+                throw new EntityNotFoundException("No payment " + payment + " in database");
+            } 
+            
+            if(updated != 1) {
+                throw new ServiceFailureException("Invalid updated rows count detected "
+                                            + "(one row should be updated): " + updated);
+            }
+            
+        } catch(SQLException ex) {
+            throw new ServiceFailureException("Error while updating payment " + payment, ex);
+        }
     }
 
     @Override
