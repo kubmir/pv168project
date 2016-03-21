@@ -111,15 +111,7 @@ public class AccountManagerImplTest {
         expectedException.expect(IllegalArgumentException.class);
         manager.createAccount(account);
     }
-    
-    //?
-    @Test
-    public void testCreateAccIllegalFormatOfNumber() {
-        Account account = newAccount("asd", "1", BigDecimal.ZERO);        
-        expectedException.expect(IllegalArgumentException.class);
-        manager.createAccount(account);
-    }
-    
+        
     @Test
     public void testCreateAccNullNumber() {
         Account account = newAccount(null, "1", BigDecimal.ZERO);        
@@ -241,17 +233,6 @@ public class AccountManagerImplTest {
         manager.updateAccount(account);
     }
     
-    @Test
-    public void testUpdateAccIllegalFormatOfNumber() {
-        Account account= newAccount("2", "f", BigDecimal.ZERO);
-        manager.createAccount(account);
-        account = manager.getAccountById(account.getId());
-        account.setNumber("wer");
-        
-        expectedException.expect(IllegalArgumentException.class);
-        manager.updateAccount(account);
-    }
-
     @Test
     public void testUpdateAccNullHolder() {
         Account account= newAccount("2", "f", BigDecimal.ZERO);

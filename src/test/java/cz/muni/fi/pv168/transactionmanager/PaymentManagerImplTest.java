@@ -231,8 +231,7 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(EntityNotFoundException.class);
-        manager.getPaymentsFromAccount(to);
+        assertTrue(manager.getPaymentsFromAccount(to).isEmpty());
     }
     
     @Test
@@ -258,8 +257,7 @@ public class PaymentManagerImplTest {
         assertTrue(manager.getAllPayments().isEmpty());
         manager.createPayment(payment);
         
-        expectedException.expect(EntityNotFoundException.class);
-        manager.getPaymentsToAcoount(from);
+        assertTrue(manager.getPaymentsToAcoount(from).isEmpty());
     }
     
     @Test

@@ -235,11 +235,74 @@ public class PaymentManagerImpl implements PaymentManager {
 
     @Override
     public List<Payment> getPaymentsFromAccount(Account account) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        validate(account);
+        
+        if(account.getId() == null) {
+            throw new IllegalArgumentException("Null id of account in getPaymentsFromAccount");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(
+                "SELECT * FROM payment WHERE fromAccount = ?")) {
+            
+            st.setLong(1, account.getId());
+            List<Payment> toReturn = new ArrayList<>();
+            ResultSet rs = st.executeQuery();
+            
+            while(rs.next()) {
+                toReturn.add(resultSetToPayment(rs));
+            }
+            
+            return toReturn;
+        } catch(SQLException ex) {
+            throw new ServiceFailureException("Error while getting all payment "
+                                              + "from account " + account,ex);
+        }
     }
 
     @Override
     public List<Payment> getPaymentsToAcoount(Account account) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        validate(account);
+        
+        if(account.getId() == null) {
+            throw new IllegalArgumentException("Null id of account in getPaymentsToAccount");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(
+                "SELECT * FROM payment WHERE toAccount = ?")) {
+            
+            st.setLong(1, account.getId());
+            ResultSet rs = st.executeQuery();
+            List<Payment> toReturn = new ArrayList<>();
+            
+            while(rs.next()) {
+                toReturn.add(resultSetToPayment(rs));
+            }
+            
+            return toReturn;
+            
+        } catch (SQLException ex) {
+            throw new ServiceFailureException("Error while getting all payment "
+                                              + "to account " + account,ex);
+        }
+    }
+    
+    private void validate(Account account) throws IllegalArgumentException {
+        if(account == null) {
+            throw new IllegalArgumentException("Null Account");
+        }
+        
+        if(account.getNumber() == null) {
+            throw new IllegalArgumentException("Null number of account");
+        }
+        
+        if(account.getHolder() == null) {
+            throw new IllegalArgumentException("Null holder of account");
+        }
+        
+        if(account.getBalance().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Negative balance of account");
+        }        
     }
 }

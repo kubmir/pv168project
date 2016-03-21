@@ -70,7 +70,8 @@ public class AccountManagerImpl implements AccountManager {
         
         if(account.getBalance().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Negative balance of account");
-        }        
+        }
+        
     }
     
     private Long getKey(ResultSet keyRS, Account account) throws ServiceFailureException, SQLException {
