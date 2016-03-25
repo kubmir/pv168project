@@ -1,11 +1,13 @@
 package cz.muni.fi.pv168.transactionmanager;
 
+import cz.muni.fi.pv168.utils.AccountHelper;
+import cz.muni.fi.pv168.utils.EntityNotFoundException;
+import cz.muni.fi.pv168.utils.ServiceFailureException;
 import java.sql.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.sql.DataSource;
 
 /**
@@ -16,11 +18,11 @@ import javax.sql.DataSource;
 public class PaymentManagerImpl implements PaymentManager {
 
     private final DataSource dataSource;
-    private final AccountManagerImpl accountManager;
+    private final AccountHelper accountHelper;
     
-    public PaymentManagerImpl(DataSource dataSource, AccountManagerImpl manager) {
+    public PaymentManagerImpl(DataSource dataSource) {
         this.dataSource = dataSource;
-        this.accountManager = manager;
+        accountHelper = new AccountHelper();
     }
     
     @Override
@@ -187,11 +189,11 @@ public class PaymentManagerImpl implements PaymentManager {
             ResultSet rs = st.executeQuery();
             
             if(rs.next()) {
-                Payment payment = resultSetToPayment(rs);
+                Payment payment = resultSetToPayment(connection, rs);
                 
                 if (rs.next()) {
                     throw new ServiceFailureException("Internal error: More entities with the same id found "
-                            + "(source id: " + id + ", found " + payment + " and " + resultSetToPayment(rs));
+                            + "(source id: " + id + ", found " + payment + " and " + resultSetToPayment(connection, rs));
                 }
                 
                 return payment;
@@ -203,16 +205,51 @@ public class PaymentManagerImpl implements PaymentManager {
         }
     }
     
-    private Payment resultSetToPayment(ResultSet rs) throws SQLException {
+    private Payment resultSetToPayment(Connection connection, ResultSet rs) throws SQLException {
+        Payment payment = setAttributeOfPayment(rs);
+        payment.setFrom(loadAccountOfPayment(connection,rs.getLong("fromAccount")));
+        payment.setTo(loadAccountOfPayment(connection,rs.getLong("toAccount")));
+        
+        return payment;
+    }
+    
+    private Payment setAttributeOfPayment(ResultSet rs) throws SQLException {
         Payment payment = new Payment();
         
         payment.setAmount(rs.getBigDecimal("amount"));
         payment.setId(rs.getLong("id"));
-        payment.setFrom(accountManager.getAccountById(rs.getLong("fromAccount")));
-        payment.setTo(accountManager.getAccountById(rs.getLong("toAccount")));
         payment.setDate(rs.getDate("date").toLocalDate());
         
         return payment;
+    }
+    
+    private Account loadAccountOfPayment(Connection connection, Long idOfAccount) {
+        if (idOfAccount == null) {
+            throw new IllegalArgumentException("Null id of account when retrieving account from database!");
+        }
+        
+        try( PreparedStatement st = connection.prepareStatement
+             ("SELECT id, balance, holder, number FROM account WHERE id = ?")) {
+            
+            st.setLong(1, idOfAccount);
+            ResultSet rs = st.executeQuery();
+            
+            if(rs.next()) {
+                
+                Account account = accountHelper.resultSetToAccount(rs);
+       
+                if(rs.next()) {
+                    throw new IllegalArgumentException("Too much accounts with ID " + idOfAccount);
+                }
+                
+                return account;
+            } else {
+                throw new IllegalArgumentException("No account with ID " + idOfAccount);
+            }
+            
+        } catch (SQLException ex) {
+            throw new ServiceFailureException("Error while retrieving account with ID " + idOfAccount + ex);
+        }
     }
 
     @Override
@@ -224,7 +261,7 @@ public class PaymentManagerImpl implements PaymentManager {
             ResultSet rs = st.executeQuery();
             
             while(rs.next()) {
-                toReturn.add(resultSetToPayment(rs));
+                toReturn.add(resultSetToPayment(connection,rs));
             }
             
             return toReturn;
@@ -235,7 +272,7 @@ public class PaymentManagerImpl implements PaymentManager {
 
     @Override
     public List<Payment> getPaymentsFromAccount(Account account) {
-        validate(account);
+        accountHelper.validate(account);
         
         if(account.getId() == null) {
             throw new IllegalArgumentException("Null id of account in getPaymentsFromAccount");
@@ -250,7 +287,7 @@ public class PaymentManagerImpl implements PaymentManager {
             ResultSet rs = st.executeQuery();
             
             while(rs.next()) {
-                toReturn.add(resultSetToPayment(rs));
+                toReturn.add(resultSetToPayment(connection,rs));
             }
             
             return toReturn;
@@ -262,7 +299,7 @@ public class PaymentManagerImpl implements PaymentManager {
 
     @Override
     public List<Payment> getPaymentsToAcoount(Account account) {
-        validate(account);
+        accountHelper.validate(account);
         
         if(account.getId() == null) {
             throw new IllegalArgumentException("Null id of account in getPaymentsToAccount");
@@ -277,7 +314,7 @@ public class PaymentManagerImpl implements PaymentManager {
             List<Payment> toReturn = new ArrayList<>();
             
             while(rs.next()) {
-                toReturn.add(resultSetToPayment(rs));
+                toReturn.add(resultSetToPayment(connection,rs));
             }
             
             return toReturn;
@@ -286,23 +323,5 @@ public class PaymentManagerImpl implements PaymentManager {
             throw new ServiceFailureException("Error while getting all payment "
                                               + "to account " + account,ex);
         }
-    }
-    
-    private void validate(Account account) throws IllegalArgumentException {
-        if(account == null) {
-            throw new IllegalArgumentException("Null Account");
-        }
-        
-        if(account.getNumber() == null) {
-            throw new IllegalArgumentException("Null number of account");
-        }
-        
-        if(account.getHolder() == null) {
-            throw new IllegalArgumentException("Null holder of account");
-        }
-        
-        if(account.getBalance().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Negative balance of account");
-        }        
-    }
+    }    
 }

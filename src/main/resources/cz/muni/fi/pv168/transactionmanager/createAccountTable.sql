@@ -1,0 +1,6 @@
+CREATE TABLE account (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    number VARCHAR(255),
+    holder VARCHAR(255),
+    balance DECIMAL(12,4)
+);

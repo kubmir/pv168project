@@ -1,5 +1,7 @@
 package cz.muni.fi.pv168.transactionmanager;
 
+import cz.muni.fi.pv168.utils.DBUtils;
+import cz.muni.fi.pv168.utils.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -30,21 +32,13 @@ public class AccountManagerImplTest {
     @Before
     public void setUp() throws SQLException {
         dataSource = prepareDataSource();
-        try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("CREATE TABLE ACCOUNT ("
-                    + "id bigint primary key generated always as identity,"
-                    + "number varchar(255),"
-                    + "holder varchar(255),"
-                    + "balance decimal(12,4))").executeUpdate();
-        }
+        DBUtils.executeSqlScript(dataSource, AccountManager.class.getResource("createAccountTable.sql"));
         manager = new AccountManagerImpl(dataSource);
     }
     
     @After
     public void tearDown() throws SQLException {
-        try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("DROP TABLE ACCOUNT").executeUpdate();
-        }
+        DBUtils.executeSqlScript(dataSource, AccountManager.class.getResource("dropAccountTable.sql"));
     }
 
     private static DataSource prepareDataSource() throws SQLException {

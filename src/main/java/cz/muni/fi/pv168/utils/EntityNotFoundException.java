@@ -1,4 +1,4 @@
-package cz.muni.fi.pv168.transactionmanager;
+package cz.muni.fi.pv168.utils;
 
 /**
  * This exception is thrown when delete or update operation is performed 

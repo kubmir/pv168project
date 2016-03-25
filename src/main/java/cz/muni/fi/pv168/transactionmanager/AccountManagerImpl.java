@@ -1,6 +1,8 @@
 package cz.muni.fi.pv168.transactionmanager;
 
-import java.math.BigDecimal;
+import cz.muni.fi.pv168.utils.AccountHelper;
+import cz.muni.fi.pv168.utils.EntityNotFoundException;
+import cz.muni.fi.pv168.utils.ServiceFailureException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,14 +20,16 @@ import javax.sql.DataSource;
 public class AccountManagerImpl implements AccountManager {
     
     private final DataSource dataSource;
+    private final AccountHelper accountHelper;
     
     public AccountManagerImpl(DataSource dataSource) {
         this.dataSource = dataSource;
+        accountHelper = new AccountHelper();
     }
         
     @Override
     public void createAccount(Account account) throws ServiceFailureException {
-        validate(account);
+        accountHelper.validate(account);
         
         if(account.getId() != null) {
             throw new IllegalArgumentException("Account ID is already set");
@@ -51,29 +55,10 @@ public class AccountManagerImpl implements AccountManager {
             account.setId(getKey(keyRS,account));
                          
         } catch(SQLException ex) {
-            throw new ServiceFailureException("Error when inserting account " + account, ex);
+            throw new ServiceFailureException("Error when inserting account " + account + ex, ex);
         }
     }
-    
-    private void validate(Account account) throws IllegalArgumentException {
-        if(account == null) {
-            throw new IllegalArgumentException("Null Account");
-        }
-        
-        if(account.getNumber() == null) {
-            throw new IllegalArgumentException("Null number of account");
-        }
-        
-        if(account.getHolder() == null) {
-            throw new IllegalArgumentException("Null holder of account");
-        }
-        
-        if(account.getBalance().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Negative balance of account");
-        }
-        
-    }
-    
+      
     private Long getKey(ResultSet keyRS, Account account) throws ServiceFailureException, SQLException {
         if (keyRS.next()) {
             if (keyRS.getMetaData().getColumnCount() != 1) {
@@ -99,7 +84,7 @@ public class AccountManagerImpl implements AccountManager {
 
     @Override
     public void updateAccount(Account account) throws ServiceFailureException, EntityNotFoundException {
-        validate(account);
+        accountHelper.validate(account);
         
         if(account.getId() == null) {
             throw new IllegalArgumentException("Null id of account to upadate");
@@ -132,7 +117,7 @@ public class AccountManagerImpl implements AccountManager {
 
     @Override
     public void deleteAccount(Account account) throws ServiceFailureException, EntityNotFoundException {
-        validate(account);
+        accountHelper.validate(account);
         
         if(account.getId() == null) {
             throw new IllegalArgumentException("Null id of payment to delete");
@@ -173,12 +158,12 @@ public class AccountManagerImpl implements AccountManager {
             ResultSet rs = st.executeQuery();
             
             if(rs.next()) {
-                Account account = resultSetToAccount(rs);
+                Account account = accountHelper.resultSetToAccount(rs);
                 
                 if(rs.next()) {
                     throw new ServiceFailureException(
                             "Internal error: More entities with the same id found "
-                            + "(source id: " + id + ", found " + account + " and " + resultSetToAccount(rs));
+                            + "(source id: " + id + ", found " + account + " and " + accountHelper.resultSetToAccount(rs));
                 }
                 
                 return account;
@@ -190,16 +175,6 @@ public class AccountManagerImpl implements AccountManager {
         }
     }
     
-    private Account resultSetToAccount(ResultSet rs) throws SQLException {
-        Account account = new Account();
-        account.setId(rs.getLong("id"));
-        account.setBalance(rs.getBigDecimal("balance"));
-        account.setHolder(rs.getString("holder"));
-        account.setNumber(rs.getString("number"));
-        
-        return account;        
-    }
-
     @Override
     public List<Account> getAllAccounts() throws ServiceFailureException {
         List<Account> accounts = new ArrayList<>();
@@ -210,7 +185,7 @@ public class AccountManagerImpl implements AccountManager {
             ResultSet rs = st.executeQuery();
             
             while(rs.next()) {
-                accounts.add(resultSetToAccount(rs));
+                accounts.add(accountHelper.resultSetToAccount(rs));
             }
             
         } catch (SQLException ex) {

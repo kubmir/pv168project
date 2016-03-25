@@ -1,7 +1,8 @@
 package cz.muni.fi.pv168.transactionmanager;
 
+import cz.muni.fi.pv168.utils.DBUtils;
+import cz.muni.fi.pv168.utils.EntityNotFoundException;
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.Month;
@@ -25,8 +26,6 @@ import org.junit.rules.ExpectedException;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 
-
-
 /**
  * Tests for class PaymentManagerImpl
  * @author Viktória Tóthová, Miroslav Kubus
@@ -46,46 +45,28 @@ public class PaymentManagerImplTest {
     public void setUp() throws SQLException {
         dataSource = prepareDataSource();
         
-        try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("CREATE TABLE account ("
-                    + "id bigint primary key generated always as identity,"
-                    + "number varchar(255),"
-                    + "holder varchar(255),"
-                    + "balance decimal(12,4))").executeUpdate();
-        }
-        
+        DBUtils.executeSqlScript(dataSource, AccountManager.class.getResource("createAccountTable.sql"));        
         accountManager = new AccountManagerImpl(dataSource);
         from = newAccount("111","from",new BigDecimal(1000));
         accountManager.createAccount(from);
         to = newAccount("222","to",new BigDecimal(100));
         accountManager.createAccount(to);
         
-        try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("CREATE TABLE payment ("
-                    + "id BIGINT primary key generated always as identity,"
-                    + "fromAccount BIGINT REFERENCES account(id),"
-                    + "toAccount BIGINT REFERENCES account(id),"
-                    + "amount DECIMAL(12,4),"
-                    + "date DATE)").executeUpdate();
-        }
-        
-        manager = new PaymentManagerImpl(dataSource,accountManager);
-        date = LocalDate.of(2016, 3, 23);
+        DBUtils.executeSqlScript(dataSource, PaymentManager.class.getResource("createPaymentTable.sql"));
+        manager = new PaymentManagerImpl(dataSource);
+        date = LocalDate.now();
         payment = newPayment(from,to,new BigDecimal(500),date);
     }
     
     @After
     public void tearDown() throws SQLException {
-        try (Connection connection = dataSource.getConnection()) {
-            connection.prepareStatement("DROP TABLE payment").executeUpdate();
-            connection.prepareStatement("DROP TABLE account").executeUpdate();
-        }
+        DBUtils.executeSqlScript(dataSource,PaymentManager.class.getResource("dropPaymentTable.sql"));
+        DBUtils.executeSqlScript(dataSource,AccountManager.class.getResource("dropAccountTable.sql"));
     }
 
     
      private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        //we will use in memory database
         ds.setDatabaseName("memory:paymentmanager-test");
         ds.setCreateDatabase("create");
         return ds;
@@ -504,10 +485,5 @@ public class PaymentManagerImplTest {
         }
     }
     
-    private static Comparator<Payment> idComparator = new Comparator<Payment>() {
-        @Override
-        public int compare(Payment o1, Payment o2) {
-            return o1.getId().compareTo(o2.getId());
-        }
-    };
+    private static final Comparator<Payment> idComparator = (Payment o1, Payment o2) -> o1.getId().compareTo(o2.getId());
 }
