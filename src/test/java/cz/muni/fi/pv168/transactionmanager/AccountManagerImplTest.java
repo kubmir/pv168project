@@ -3,7 +3,6 @@ package cz.muni.fi.pv168.transactionmanager;
 import cz.muni.fi.pv168.utils.DBUtils;
 import cz.muni.fi.pv168.utils.EntityNotFoundException;
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -263,7 +262,7 @@ public class AccountManagerImplTest {
         Account account = newAccount("1", "1", BigDecimal.ZERO);
         account.setId(null);
         expectedException.expect(IllegalArgumentException.class);
-        manager.deleteAccount(null);
+        manager.deleteAccount(account);
     }
     
     @Test

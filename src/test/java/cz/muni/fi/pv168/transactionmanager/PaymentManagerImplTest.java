@@ -2,6 +2,7 @@ package cz.muni.fi.pv168.transactionmanager;
 
 import cz.muni.fi.pv168.utils.DBUtils;
 import cz.muni.fi.pv168.utils.EntityNotFoundException;
+import cz.muni.fi.pv168.utils.ServiceFailureException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -32,14 +33,14 @@ import org.junit.After;
  */
 public class PaymentManagerImplTest {
     
-    private PaymentManagerImpl manager;
-    private AccountManagerImpl accountManager;
+    private static PaymentManagerImpl manager;
+    private static AccountManagerImpl accountManager;
     private Account from = null;
     private Account to = null;
-    private LocalDate date = null;
-    private Payment payment = null;
-    private DataSource dataSource;
-    
+    private static LocalDate date = null;
+    private static Payment payment = null;
+    private static DataSource dataSource;
+     
     
     @Before
     public void setUp() throws SQLException {
@@ -78,6 +79,8 @@ public class PaymentManagerImplTest {
     @Test
     public void testCreatePayment() {
         manager.createPayment(payment);
+        payment = updateAmountsOfAccounts(payment);
+        
         Payment resultPayment = manager.getPaymentByID(payment.getId());
         
         assertEquals(resultPayment,payment);
@@ -149,10 +152,13 @@ public class PaymentManagerImplTest {
     
     @Test
     public void testGetPaymentByID() {
-        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
-
+        Payment paymentB = preparePaymentB();
+        
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        
+        payment = updateAmountsOfAccounts(payment);
+        updateAmountsOfAccounts(paymentB);
         
         Payment expected = payment;
         Payment actual = manager.getPaymentByID(payment.getId());
@@ -174,10 +180,13 @@ public class PaymentManagerImplTest {
     public void testGetAllPayments() {
         assertTrue(manager.getAllPayments().isEmpty());
 
-        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
-
+        Payment paymentB = preparePaymentB();
+        
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        
+        payment = updateAmountsOfAccounts(payment);
+        paymentB = updateAmountsOfAccounts(paymentB);
         
         List<Payment> expected = Arrays.asList(payment, paymentB);
         List<Payment> actual = manager.getAllPayments();
@@ -193,10 +202,13 @@ public class PaymentManagerImplTest {
     public void testGetPaymentsFromAccount() {
         assertTrue(manager.getAllPayments().isEmpty());
 
-        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
+        Payment paymentB = preparePaymentB();
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        
+        payment = updateAmountsOfAccounts(payment);
+        paymentB = updateAmountsOfAccounts(paymentB);
         
         List<Payment> expected = Arrays.asList(payment);
         List<Payment> actual = manager.getPaymentsFromAccount(from);
@@ -219,10 +231,13 @@ public class PaymentManagerImplTest {
     public void testGetPaymentsToAcoount() {
         assertTrue(manager.getAllPayments().isEmpty());
            
-        Payment paymentB = newPayment(to,from,new BigDecimal(1000),date);
+        Payment paymentB = preparePaymentB();
 
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        
+        payment = updateAmountsOfAccounts(payment);
+        paymentB = updateAmountsOfAccounts(paymentB);
         
         List<Payment> expected = Arrays.asList(payment);
         List<Payment> actual = manager.getPaymentsToAcoount(to);
@@ -280,81 +295,57 @@ public class PaymentManagerImplTest {
     }
     
     @Test
-    public void testUpdateFromAccountOfPayment() {
-        Payment paymentB = newPayment(to,from,BigDecimal.valueOf(7989),date);
-        Account helpAccount = newAccount("444","help",BigDecimal.valueOf(9999));
-
-        manager.createPayment(payment);
-        manager.createPayment(paymentB);
-        accountManager.createAccount(helpAccount);
-
-        Long id = payment.getId();
-        payment = manager.getPaymentByID(id);
-        payment.setFrom(helpAccount);
-        manager.updatePayment(payment);
-        
-        assertEquals(payment.getFrom(),helpAccount);
-        assertEquals(payment.getTo(),to);
-        assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
-        assertEquals(payment.getDate(),date);
-
-        assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
-    }
-    
-    @Test
-    public void testUpdateToAccountOfPayment() {
-        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
-        Account helpAccount = newAccount("444","help",new BigDecimal(9999));
-        
-        manager.createPayment(payment);
-        manager.createPayment(paymentB);
-        accountManager.createAccount(helpAccount);
-        
-        Long id = payment.getId();
-        payment = manager.getPaymentByID(id);
-
-        payment.setTo(helpAccount);
-        manager.updatePayment(payment);
-        assertEquals(payment.getFrom(),from);
-        assertEquals(payment.getTo(),helpAccount);
-        assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
-        assertEquals(payment.getDate(),date);
-
-        assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
-    }
-    
-    @Test
     public void testUpdateAmountOfPayment() {
-        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
+        Payment paymentB = preparePaymentB();        
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        payment = updateAmountsOfAccounts(payment);
+        paymentB = updateAmountsOfAccounts(paymentB);
         
         BigDecimal newAmount = BigDecimal.valueOf(5000);
+        BigDecimal oldAmount = payment.getAmount();
+      
         payment.setAmount(newAmount);
         manager.updatePayment(payment);
-
+        
+        payment.getFrom().setBalance(payment.getFrom().getBalance().add(oldAmount));
+        payment.getTo().setBalance(payment.getTo().getBalance().subtract(oldAmount));
+        
+        from.setBalance(from.getBalance().subtract(newAmount));
+        to.setBalance(to.getBalance().add(newAmount));
+        
+        
+        payment = manager.getPaymentByID(payment.getId());
+        
         assertEquals(payment.getFrom(),from);
         assertEquals(payment.getTo(),to);
         assertTrue((payment.getAmount().compareTo(newAmount)) == 0);     
         assertEquals(payment.getDate(),date);
 
+        assertDeepEqualsOfPayment(payment,manager.getPaymentByID(payment.getId()));
         assertDeepEqualsOfPayment(paymentB,manager.getPaymentByID(paymentB.getId()));
     }
     
     @Test
     public void testUpdateDateOfPayment() {
-        Payment paymentB = newPayment(to,from,new BigDecimal(7989),date);
+        Payment paymentB = preparePaymentB();
         manager.createPayment(payment);
         manager.createPayment(paymentB);
+        payment = updateAmountsOfAccounts(payment);
+        paymentB = updateAmountsOfAccounts(paymentB);
+        
+        from = payment.getFrom();
+        to = payment.getTo();
         LocalDate newDate = LocalDate.of(2016, Month.SEPTEMBER, 5);
 
         Long id = payment.getId();
         payment = manager.getPaymentByID(id);
-
         payment.setDate(newDate);
         manager.updatePayment(payment);
-        assertEquals(payment.getFrom(),from);
+        payment = manager.getPaymentByID(id);
+
         assertEquals(payment.getTo(),to);
+        assertEquals(payment.getFrom(),from);
         assertTrue((payment.getAmount().compareTo(BigDecimal.valueOf(500))) == 0);     
         assertEquals(payment.getDate(),newDate);
         
@@ -380,7 +371,7 @@ public class PaymentManagerImplTest {
         manager.createPayment(payment);
         payment.setId(payment.getId() + 1);
         
-        expectedException.expect(EntityNotFoundException.class);
+        expectedException.expect(ServiceFailureException.class);
         manager.updatePayment(payment);
     }
     
@@ -440,13 +431,13 @@ public class PaymentManagerImplTest {
     
     
     private static Payment newPayment(Account from, Account to, BigDecimal amount, LocalDate date) {
-        Payment payment = new Payment();
-        payment.setFrom(from);
-        payment.setTo(to);
-        payment.setAmount(amount);
-        payment.setDate(date);
+        Payment newPayment = new Payment();
+        newPayment.setFrom(from);
+        newPayment.setTo(to);
+        newPayment.setAmount(amount);
+        newPayment.setDate(date);
         
-        return payment;
+        return newPayment;
     }
     
     private static Account newAccount(String number, String holder, BigDecimal balance) {
@@ -467,14 +458,19 @@ public class PaymentManagerImplTest {
        
        assertDeepEqualsOfAccounts(expected.getFrom(),actual.getFrom());
        assertDeepEqualsOfAccounts(expected.getTo(),actual.getTo());
-        
+       
+       assertAmountChangesOfAccounts(expected, actual);  
     }
     
     private static void assertDeepEqualsOfAccounts(Account expected, Account actual) {
         assertEquals(expected.getId(),actual.getId());
         assertEquals(expected.getNumber(),actual.getNumber());
         assertEquals(expected.getHolder(),actual.getHolder());
-        assertTrue(expected.getBalance().compareTo(actual.getBalance()) == 0);     
+    }
+    
+    private static void assertAmountChangesOfAccounts(Payment expected, Payment actual) {
+        assertTrue(actual.getFrom().getBalance().compareTo(expected.getFrom().getBalance()) == 0);
+        assertTrue(actual.getTo().getBalance().compareTo(expected.getTo().getBalance()) == 0);
     }
     
     private void assertDeepEquals(List<Payment> expectedList, List<Payment> actualList) {
@@ -483,6 +479,24 @@ public class PaymentManagerImplTest {
             Payment actual = actualList.get(i);
             assertDeepEqualsOfPayment(expected, actual);
         }
+    }
+    
+    private static Payment updateAmountsOfAccounts(Payment toUpdatePayment) {
+        toUpdatePayment.getFrom().setBalance(toUpdatePayment.getFrom().getBalance().subtract(toUpdatePayment.getAmount()));
+        toUpdatePayment.getTo().setBalance(toUpdatePayment.getTo().getBalance().add(toUpdatePayment.getAmount()));
+        
+        return toUpdatePayment;
+    }
+    
+    private static Payment preparePaymentB() {
+        Account fromB = newAccount("14785","fromB",new BigDecimal(444));
+        Account toB = newAccount("14785","toB",new BigDecimal(555));
+        accountManager.createAccount(fromB);
+        accountManager.createAccount(toB);
+
+        Payment paymentB = newPayment(fromB,toB,new BigDecimal(1000),date);
+        
+        return paymentB;
     }
     
     private static final Comparator<Payment> idComparator = (Payment o1, Payment o2) -> o1.getId().compareTo(o2.getId());

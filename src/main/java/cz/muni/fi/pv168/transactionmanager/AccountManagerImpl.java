@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
@@ -19,6 +21,7 @@ import javax.sql.DataSource;
  */
 public class AccountManagerImpl implements AccountManager {
     
+    private static final Logger logger = Logger.getLogger(AccountManagerImpl.class.getName());
     private final DataSource dataSource;
     private final AccountHelper accountHelper;
     
@@ -29,6 +32,7 @@ public class AccountManagerImpl implements AccountManager {
         
     @Override
     public void createAccount(Account account) throws ServiceFailureException {
+        logger.log(Level.INFO, "Creating new account");
         accountHelper.validate(account);
         
         if(account.getId() != null) {
@@ -55,11 +59,14 @@ public class AccountManagerImpl implements AccountManager {
             account.setId(getKey(keyRS,account));
                          
         } catch(SQLException ex) {
+            logger.log(Level.SEVERE, "Error when creating new account" + account, ex);
             throw new ServiceFailureException("Error when inserting account " + account + ex, ex);
         }
     }
       
     private Long getKey(ResultSet keyRS, Account account) throws ServiceFailureException, SQLException {
+        logger.log(Level.INFO, "Setting primary key of new account");
+        
         if (keyRS.next()) {
             if (keyRS.getMetaData().getColumnCount() != 1) {
                 throw new ServiceFailureException("Internal Error: Generated key"
@@ -84,6 +91,7 @@ public class AccountManagerImpl implements AccountManager {
 
     @Override
     public void updateAccount(Account account) throws ServiceFailureException, EntityNotFoundException {
+        logger.log(Level.INFO, "Updating account {0}", account);
         accountHelper.validate(account);
         
         if(account.getId() == null) {
@@ -111,16 +119,21 @@ public class AccountManagerImpl implements AccountManager {
             }
             
         } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error while updating account " + account, ex);
             throw new ServiceFailureException("Error while updating of account " + account, ex);
         }
     }
 
     @Override
     public void deleteAccount(Account account) throws ServiceFailureException, EntityNotFoundException {
-        accountHelper.validate(account);
+        logger.log(Level.INFO, "Deleting account {0}", account);
+        
+        if(account == null) {
+            throw new IllegalArgumentException("Non existing account to delete");
+        }
         
         if(account.getId() == null) {
-            throw new IllegalArgumentException("Null id of payment to delete");
+            throw new IllegalArgumentException("Null id of account to delete");
         }
         
         try( Connection connection = dataSource.getConnection();
@@ -139,6 +152,8 @@ public class AccountManagerImpl implements AccountManager {
             }
             
         } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error while deleting account with id " 
+                                              + account.getId(), ex);
             throw new ServiceFailureException("Error when deleting account with id "
                                               + account.getId(), ex);
         }
@@ -146,6 +161,8 @@ public class AccountManagerImpl implements AccountManager {
 
     @Override
     public Account getAccountById(Long id)  throws ServiceFailureException {
+        logger.log(Level.INFO, "Getting account with ID: {0}", id);
+        
         if(id == null) {
             throw new IllegalArgumentException("Null id of account in getAccountByID");
         }
@@ -171,12 +188,15 @@ public class AccountManagerImpl implements AccountManager {
                 return null;
             }
         } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error while getting account with ID " + id , ex);
             throw new ServiceFailureException("Error when retrieving account with id " + id, ex);
         }
     }
     
     @Override
     public List<Account> getAllAccounts() throws ServiceFailureException {
+        logger.log(Level.INFO, "Getting all accounts from database");
+        
         List<Account> accounts = new ArrayList<>();
         
         try( Connection connection = dataSource.getConnection();
@@ -189,9 +209,10 @@ public class AccountManagerImpl implements AccountManager {
             }
             
         } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error while getting all accounts", ex);
             throw new ServiceFailureException("Error when retrieving all accounts",ex);
         }
-        
+   
         return accounts;
     }
 }

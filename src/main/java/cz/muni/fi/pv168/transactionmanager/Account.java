@@ -21,6 +21,13 @@ public class Account {
         this.holder = null;
         this.balance = null;
     }
+    
+    public Account(String number, String holder, BigDecimal balance) {
+        this.id = null;
+        this.number = number;
+        this.balance = balance;
+        this.holder = holder;
+    }
 
     public Long getId() {
         return id;
