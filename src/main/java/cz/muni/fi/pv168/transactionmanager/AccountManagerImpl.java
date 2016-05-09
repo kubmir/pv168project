@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 
 /**
  * This class implements interface AccountManager
@@ -58,9 +59,14 @@ public class AccountManagerImpl implements AccountManager {
             ResultSet keyRS = st.getGeneratedKeys();
             account.setId(getKey(keyRS,account));
                          
+        } catch(DerbySQLIntegrityConstraintViolationException ex) {
+            logger.log(Level.SEVERE, "Error when creating new account. Account number " 
+                                      + account.getNumber() + " is already used.", ex);
+            throw new ServiceFailureException("Error when creating new account. Account number "
+                                              + account.getNumber() + " is already used.", ex);
         } catch(SQLException ex) {
             logger.log(Level.SEVERE, "Error when creating new account" + account, ex);
-            throw new ServiceFailureException("Error when inserting account " + account + ex, ex);
+            throw new ServiceFailureException("Error when inserting account " + account, ex);
         }
     }
       
@@ -214,5 +220,39 @@ public class AccountManagerImpl implements AccountManager {
         }
    
         return accounts;
+    }
+    
+    @Override
+    public Account getAccountByNumber(String number)  throws ServiceFailureException {
+        logger.log(Level.INFO, "Getting account with number: {0}", number);
+        
+        if(number == null) {
+            throw new IllegalArgumentException("Null number of account in getAccountByNumber");
+        }
+        
+        try( Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(
+                "SELECT id,number,holder,balance FROM account WHERE number = ?")) {
+            
+            st.setString(1, number);
+            ResultSet rs = st.executeQuery();
+            
+            if(rs.next()) {
+                Account account = accountHelper.resultSetToAccount(rs);
+                
+                if(rs.next()) {
+                    throw new ServiceFailureException(
+                            "Internal error: More entities with the same number found "
+                            + "(source number: " + number + ", found " + account + " and " + accountHelper.resultSetToAccount(rs));
+                }
+                
+                return account;
+            } else {
+                return null;
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error while getting account with number " + number , ex);
+            throw new ServiceFailureException("Error when retrieving account with number " + number, ex);
+        }
     }
 }

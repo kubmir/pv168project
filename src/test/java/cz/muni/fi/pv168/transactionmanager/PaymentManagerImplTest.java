@@ -490,7 +490,7 @@ public class PaymentManagerImplTest {
     
     private static Payment preparePaymentB() {
         Account fromB = newAccount("14785","fromB",new BigDecimal(444));
-        Account toB = newAccount("14785","toB",new BigDecimal(555));
+        Account toB = newAccount("14786","toB",new BigDecimal(555));
         accountManager.createAccount(fromB);
         accountManager.createAccount(toB);
 

@@ -45,5 +45,12 @@ public interface AccountManager {
      * @return list of all accounts in the database.
      */
     List<Account> getAllAccounts();
-
+    
+    /**
+     * Returns account with given number. 
+     * @param number of requested account.
+     * @return account with given number or null if such account does not exist.
+     * @throws IllegalArgumentException when given id is null.
+     */
+    Account getAccountByNumber(String number);
 }
