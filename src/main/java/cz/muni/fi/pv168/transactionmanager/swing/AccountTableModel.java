@@ -3,8 +3,10 @@ package cz.muni.fi.pv168.transactionmanager.swing;
 import cz.muni.fi.pv168.transactionmanager.Account;
 import cz.muni.fi.pv168.transactionmanager.AccountManagerImpl;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -63,13 +65,13 @@ public class AccountTableModel extends AbstractTableModel {
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
-                return "Id";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("ID");
             case 1:
-                return "Number";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("NUMBER");
             case 2:
-                return "Holder";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("HOLDER");
             case 3:
-                return "Balance";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("BALANCE");
             default:
                 throw new IllegalArgumentException("ColumnIndex out of numbers of columns");
         }

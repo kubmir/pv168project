@@ -3,9 +3,13 @@ package cz.muni.fi.pv168.transactionmanager.swing;
 import cz.muni.fi.pv168.transactionmanager.Account;
 import cz.muni.fi.pv168.transactionmanager.Payment;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -16,8 +20,6 @@ public class PaymentTableModel extends AbstractTableModel {
 
     private List<Payment> payments = new ArrayList<>();
         
-    //Co je lepsie ... casova zlozitost kvoli ziskavaniu dat z DB alebo duplicita dat ??
-    //Cize 27.riadok tak ako ho mam vs. acconts.add(account);
     public void addPayment(Payment payment) {
         int lastRowIndex = payments.size();
         payments.add(payment);
@@ -57,15 +59,15 @@ public class PaymentTableModel extends AbstractTableModel {
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
-                return "Id";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("ID");
             case 1:
-                return "From";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("FROM");
             case 2:
-                return "To";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("TO");
             case 3:
-                return "Amount";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("AMOUNT");
             case 4:
-                return "Date";
+                return java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("DATE");
             default:
                 throw new IllegalArgumentException("ColumnIndex out of numbers of columns");
         }

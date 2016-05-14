@@ -8,6 +8,7 @@ import cz.muni.fi.pv168.utils.DBUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ import javax.sql.DataSource;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 /**
@@ -59,13 +61,11 @@ public class TransactionManager extends javax.swing.JFrame {
         protected void done() {
             try {
                 this.get();
-                createAccountExceptionLabel.setForeground(Color.GREEN);
-                createAccountExceptionLabel.setText("Account created");
-            } catch(InterruptedException | ExecutionException ex) {
-                createAccountExceptionLabel.setForeground(Color.RED);
-                createAccountExceptionLabel.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("ACCOUNT CREATED"), "Message", JOptionPane.INFORMATION_MESSAGE);
+            } catch (InterruptedException | ExecutionException ex) {
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
-        }   
+        }
     }
         
     private class CreatePaymentSwingWorker extends SwingWorker<Void, Void> {
@@ -88,11 +88,9 @@ public class TransactionManager extends javax.swing.JFrame {
         protected void done() {
             try {
                 this.get();
-                createPaymentJLabel.setForeground(Color.GREEN);
-                createPaymentJLabel.setText("Payment created");
+                JOptionPane.showMessageDialog(null, java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("PAYMENT CREATED"), "Message", JOptionPane.INFORMATION_MESSAGE);
             } catch(InterruptedException | ExecutionException ex) {
-                createPaymentJLabel.setForeground(Color.RED);
-                createPaymentJLabel.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }   
     }
@@ -114,11 +112,10 @@ public class TransactionManager extends javax.swing.JFrame {
         protected void done() {
             try {
                 this.get();
-                deleteAccountJLabel.setText("");
+                JOptionPane.showMessageDialog(null, "Account deleted", "Message", JOptionPane.INFORMATION_MESSAGE);
                 accountModel.removeRow(index);
             } catch (InterruptedException | ExecutionException ex) {
-                deleteAccountJLabel.setForeground(Color.RED);
-                deleteAccountJLabel.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }      
     }
@@ -145,10 +142,9 @@ public class TransactionManager extends javax.swing.JFrame {
                 accountModel.setValueAt(acc.getNumber(), index, 1);
                 accountModel.setValueAt(acc.getHolder(), index, 2);
                 accountModel.setValueAt(acc.getBalance(), index, 3);
-                deleteAccountJLabel.setText("");
+//                JOptionPane.showMessageDialog(null, "Account updated", "Message", JOptionPane.INFORMATION_MESSAGE);
             } catch (InterruptedException | ExecutionException ex) {
-                deleteAccountJLabel.setForeground(Color.RED);
-                deleteAccountJLabel.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }      
     }
@@ -205,10 +201,8 @@ public class TransactionManager extends javax.swing.JFrame {
                 paymentAccountHolder.setText(selected.getHolder());
                 paymentAccountBalanceLabel.setText(String.valueOf(selected.getBalance()));
                 paymentAccountNumberLabel.setText((String)chooseAccountInPaymentComboBox.getSelectedItem());
-                chooseAccountInPaymentJLabel.setText("");
             } catch (InterruptedException | ExecutionException ex) {
-                chooseAccountInPaymentJLabel.setForeground(Color.RED);
-                chooseAccountInPaymentJLabel.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -244,10 +238,8 @@ public class TransactionManager extends javax.swing.JFrame {
                 for(Payment pat : payments) {
                     paymentModel.addPayment(pat);
                 }
-                getTransactionsJLable.setText("");
             } catch (InterruptedException | ExecutionException  ex) {
-                getTransactionsJLable.setForeground(Color.RED);
-                getTransactionsJLable.setText(ex.getCause().getMessage());
+                JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             } 
         }
     }
@@ -270,7 +262,6 @@ public class TransactionManager extends javax.swing.JFrame {
         createAccountNumberTextField = new javax.swing.JTextField();
         jLabel12 = new javax.swing.JLabel();
         createAccountBalanceTextField = new javax.swing.JTextField();
-        createAccountExceptionLabel = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jAccountTable = new javax.swing.JTable();
@@ -280,7 +271,6 @@ public class TransactionManager extends javax.swing.JFrame {
         jLabel23 = new javax.swing.JLabel();
         jSeparator4 = new javax.swing.JSeparator();
         deleteAccountButton = new javax.swing.JButton();
-        deleteAccountJLabel = new javax.swing.JLabel();
         accountNumberTextField = new javax.swing.JTextField();
         accountHolderTextField = new javax.swing.JTextField();
         accountBalanceTextField = new javax.swing.JTextField();
@@ -295,8 +285,6 @@ public class TransactionManager extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         createPaymentButton = new javax.swing.JButton();
         jCalendar = new com.toedter.calendar.JCalendar();
-        createPaymentJLabel = new javax.swing.JLabel();
-        chooseAccountInPaymentJLabel = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         chooseAccountInPaymentComboBox = new javax.swing.JComboBox<>();
@@ -313,7 +301,6 @@ public class TransactionManager extends javax.swing.JFrame {
         paymentAccountNumberLabel = new javax.swing.JLabel();
         paymentAccountHolder = new javax.swing.JLabel();
         paymentAccountBalanceLabel = new javax.swing.JLabel();
-        getTransactionsJLable = new javax.swing.JLabel();
         MainJMenuBar = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jAccountsSummaryButtonInMenu = new javax.swing.JMenuItem();
@@ -328,35 +315,30 @@ public class TransactionManager extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel16.setText("Holder:");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle"); // NOI18N
+        jLabel16.setText(bundle.getString("TransactionManager.jLabel16.text")); // NOI18N
 
-        createAccountHolderTextField.setText("Jana Nováková");
+        createAccountHolderTextField.setText(bundle.getString("TransactionManager.createAccountHolderTextField.text")); // NOI18N
 
-        createAccountButton.setText("Create new account");
+        createAccountButton.setText(bundle.getString("TransactionManager.createAccountButton.text")); // NOI18N
         createAccountButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createAccountButtonActionPerformed(evt);
             }
         });
 
-        jLabel17.setText("Number:");
+        jLabel17.setText(bundle.getString("TransactionManager.jLabel17.text")); // NOI18N
 
-        createAccountNumberTextField.setText("12345678");
+        createAccountNumberTextField.setText(bundle.getString("TransactionManager.createAccountNumberTextField.text")); // NOI18N
 
-        jLabel12.setText("Balance:");
+        jLabel12.setText(bundle.getString("TransactionManager.jLabel12.text")); // NOI18N
 
-        createAccountBalanceTextField.setText("1000.00");
+        createAccountBalanceTextField.setText(bundle.getString("TransactionManager.createAccountBalanceTextField.text")); // NOI18N
         createAccountBalanceTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createAccountBalanceTextFieldActionPerformed(evt);
             }
         });
-
-        createAccountExceptionLabel.setFont(new java.awt.Font("Arial", 3, 18)); // NOI18N
-        createAccountExceptionLabel.setForeground(new java.awt.Color(255, 0, 0));
-        createAccountExceptionLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        createAccountExceptionLabel.setToolTipText("");
-        createAccountExceptionLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -365,7 +347,6 @@ public class TransactionManager extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(createAccountExceptionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(createAccountButton))
@@ -380,7 +361,7 @@ public class TransactionManager extends javax.swing.JFrame {
                                 .addComponent(createAccountHolderTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)
                                 .addComponent(createAccountBalanceTextField))
                             .addComponent(createAccountNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 177, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 692, Short.MAX_VALUE)))
+                        .addGap(0, 475, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -398,17 +379,15 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
                     .addComponent(createAccountBalanceTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 307, Short.MAX_VALUE)
-                .addComponent(createAccountExceptionLabel)
-                .addGap(86, 86, 86)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 393, Short.MAX_VALUE)
                 .addComponent(createAccountButton)
                 .addContainerGap())
         );
 
-        jTransactionManagerTabbedPane.addTab("Create new account", jPanel4);
+        jTransactionManagerTabbedPane.addTab(bundle.getString("TransactionManager.jPanel4.TabConstraints.tabTitle"), jPanel4); // NOI18N
 
         jAccountTable.setModel(new AccountTableModel(accountManager));
-        jAccountTable.getTableHeader().setReorderingAllowed(false);
+        jAccountTable.setDefaultRenderer(BigDecimal.class, new BigDecimalRenderer());
         jAccountTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jAccountTableMouseClicked(evt);
@@ -416,23 +395,20 @@ public class TransactionManager extends javax.swing.JFrame {
         });
         jScrollPane2.setViewportView(jAccountTable);
 
-        jLabel20.setText("Details:");
+        jLabel20.setText(bundle.getString("TransactionManager.jLabel20.text")); // NOI18N
 
-        jLabel21.setText("Number:");
+        jLabel21.setText(bundle.getString("TransactionManager.jLabel21.text")); // NOI18N
 
-        jLabel22.setText("Holder:");
+        jLabel22.setText(bundle.getString("TransactionManager.jLabel22.text")); // NOI18N
 
-        jLabel23.setText("Balance:");
+        jLabel23.setText(bundle.getString("TransactionManager.jLabel23.text")); // NOI18N
 
-        deleteAccountButton.setText("Delete");
+        deleteAccountButton.setText(bundle.getString("TransactionManager.deleteAccountButton.text")); // NOI18N
         deleteAccountButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteAccountButtonActionPerformed(evt);
             }
         });
-
-        deleteAccountJLabel.setFont(new java.awt.Font("Arial", 3, 18)); // NOI18N
-        deleteAccountJLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
         accountNumberTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
@@ -440,7 +416,7 @@ public class TransactionManager extends javax.swing.JFrame {
 
         accountBalanceTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
-        updateAccountButton.setText("Update");
+        updateAccountButton.setText(bundle.getString("TransactionManager.updateAccountButton.text")); // NOI18N
         updateAccountButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 updateAccountButtonActionPerformed(evt);
@@ -456,7 +432,7 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1018, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 801, Short.MAX_VALUE)
                             .addComponent(jSeparator4)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel20)
@@ -472,13 +448,8 @@ public class TransactionManager extends javax.swing.JFrame {
                             .addComponent(accountHolderTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
                             .addComponent(accountNumberTextField, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(accountBalanceTextField))
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(deleteAccountJLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(updateAccountButton)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(updateAccountButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deleteAccountButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(28, 28, 28))))
@@ -495,11 +466,9 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(deleteAccountJLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel22)
-                                .addComponent(accountHolderTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel22)
+                            .addComponent(accountHolderTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel23)
@@ -517,9 +486,9 @@ public class TransactionManager extends javax.swing.JFrame {
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
-        jTransactionManagerTabbedPane.addTab("Accounts", jPanel1);
+        jTransactionManagerTabbedPane.addTab(bundle.getString("TransactionManager.jPanel1.TabConstraints.tabTitle"), jPanel1); // NOI18N
 
-        jLabel2.setText("From Account:");
+        jLabel2.setText(bundle.getString("TransactionManager.jLabel2.text")); // NOI18N
 
         makePaymentFromAccJComboBox.setMaximumRowCount(10);
         makePaymentFromAccJComboBox.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -528,36 +497,28 @@ public class TransactionManager extends javax.swing.JFrame {
             }
         });
 
-        jLabel9.setText("To Account");
+        jLabel9.setText(bundle.getString("TransactionManager.jLabel9.text")); // NOI18N
 
         makePaymentToAccJComboBox.setMaximumRowCount(10);
-        makePaymentToAccJComboBox.setToolTipText("");
+        makePaymentToAccJComboBox.setToolTipText(bundle.getString("TransactionManager.makePaymentToAccJComboBox.toolTipText")); // NOI18N
         makePaymentToAccJComboBox.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 makePaymentToAccJComboBoxMouseClicked(evt);
             }
         });
 
-        jLabel10.setText("Amount:");
+        jLabel10.setText(bundle.getString("TransactionManager.jLabel10.text")); // NOI18N
 
-        makePaymentAmountJTextField.setText("1000.00");
+        makePaymentAmountJTextField.setText(bundle.getString("TransactionManager.makePaymentAmountJTextField.text")); // NOI18N
 
-        jLabel11.setText("Date:");
+        jLabel11.setText(bundle.getString("TransactionManager.jLabel11.text")); // NOI18N
 
-        createPaymentButton.setText("Send");
+        createPaymentButton.setText(bundle.getString("TransactionManager.createPaymentButton.text")); // NOI18N
         createPaymentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createPaymentButtonActionPerformed(evt);
             }
         });
-
-        createPaymentJLabel.setFont(new java.awt.Font("Arial", 3, 18)); // NOI18N
-        createPaymentJLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        createPaymentJLabel.setToolTipText("");
-        createPaymentJLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-
-        chooseAccountInPaymentJLabel.setFont(new java.awt.Font("Arial", 3, 18)); // NOI18N
-        chooseAccountInPaymentJLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -568,36 +529,28 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel9)
+                            .addComponent(jLabel2))
+                        .addGap(59, 59, 59)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(makePaymentFromAccJComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(59, 59, 59)
-                                .addComponent(makePaymentFromAccJComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jLabel9)
-                                .addGap(79, 79, 79)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel3Layout.createSequentialGroup()
-                                        .addComponent(makePaymentAmountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 292, Short.MAX_VALUE))
-                                    .addComponent(makePaymentToAccJComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(makePaymentAmountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 75, Short.MAX_VALUE))
+                            .addComponent(makePaymentToAccJComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(415, 415, 415))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(createPaymentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(12, 12, 12))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jLabel10)
-                        .addGap(677, 677, 677))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jLabel11)
-                        .addGap(30, 30, 30)
-                        .addComponent(jCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(chooseAccountInPaymentJLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(373, 373, 373))))
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(332, 332, 332)
-                .addComponent(createPaymentJLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel10)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(jLabel11)
+                                .addGap(30, 30, 30)
+                                .addComponent(jCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -614,26 +567,18 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel10)
                     .addComponent(makePaymentAmountJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(53, 53, 53)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(53, 53, 53)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel11)
-                            .addComponent(jCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 124, Short.MAX_VALUE)
-                        .addComponent(createPaymentJLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 10, Short.MAX_VALUE)
-                        .addGap(70, 70, 70)
-                        .addComponent(createPaymentButton)
-                        .addContainerGap())
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(100, 100, 100)
-                        .addComponent(chooseAccountInPaymentJLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addComponent(jLabel11)
+                    .addComponent(jCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
+                .addComponent(createPaymentButton)
+                .addContainerGap())
         );
 
-        jTransactionManagerTabbedPane.addTab("Make a Payment", jPanel3);
+        jTransactionManagerTabbedPane.addTab(bundle.getString("TransactionManager.jPanel3.TabConstraints.tabTitle"), jPanel3); // NOI18N
 
-        jLabel1.setText("Choose Account:");
+        jLabel1.setText(bundle.getString("TransactionManager.jLabel1.text")); // NOI18N
 
         chooseAccountInPaymentComboBox.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -647,25 +592,27 @@ public class TransactionManager extends javax.swing.JFrame {
         });
 
         jPaymentTable.setModel(new PaymentTableModel());
+        jPaymentTable.setDefaultRenderer(BigDecimal.class, new BigDecimalRenderer());
+        jPaymentTable.setDefaultRenderer(LocalDate.class, new DateRenderer());
         jPaymentTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(jPaymentTable);
 
-        jLabel3.setText("Number: ");
+        jLabel3.setText(bundle.getString("TransactionManager.jLabel3.text")); // NOI18N
 
-        jLabel4.setText("Holder: ");
+        jLabel4.setText(bundle.getString("TransactionManager.jLabel4.text")); // NOI18N
 
-        jLabel5.setText("Balance: ");
+        jLabel5.setText(bundle.getString("TransactionManager.jLabel5.text")); // NOI18N
 
-        jLabel32.setText("Filters:");
+        jLabel32.setText(bundle.getString("TransactionManager.jLabel32.text")); // NOI18N
 
-        incomingTransactionCheckBox.setText("Incoming transactions");
+        incomingTransactionCheckBox.setText(bundle.getString("TransactionManager.incomingTransactionCheckBox.text")); // NOI18N
         incomingTransactionCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 incomingTransactionCheckBoxActionPerformed(evt);
             }
         });
 
-        outgoingTransactionCheckBox.setText("Outgoing transaction");
+        outgoingTransactionCheckBox.setText(bundle.getString("TransactionManager.outgoingTransactionCheckBox.text")); // NOI18N
         outgoingTransactionCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 outgoingTransactionCheckBoxActionPerformed(evt);
@@ -697,17 +644,14 @@ public class TransactionManager extends javax.swing.JFrame {
         );
 
         paymentAccountNumberLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        paymentAccountNumberLabel.setText("NUMBER");
+        paymentAccountNumberLabel.setText(bundle.getString("TransactionManager.paymentAccountNumberLabel.text")); // NOI18N
         paymentAccountNumberLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
         paymentAccountHolder.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        paymentAccountHolder.setText("HOLDER");
+        paymentAccountHolder.setText(bundle.getString("TransactionManager.paymentAccountHolder.text")); // NOI18N
 
         paymentAccountBalanceLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        paymentAccountBalanceLabel.setText("BALANCE");
-
-        getTransactionsJLable.setFont(new java.awt.Font("Arial", 3, 18)); // NOI18N
-        getTransactionsJLable.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        paymentAccountBalanceLabel.setText(bundle.getString("TransactionManager.paymentAccountBalanceLabel.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -730,9 +674,7 @@ public class TransactionManager extends javax.swing.JFrame {
                             .addComponent(paymentAccountHolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(paymentAccountBalanceLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
                             .addComponent(chooseAccountInPaymentComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(getTransactionsJLable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(32, 32, 32)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 173, Short.MAX_VALUE)
                         .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -742,42 +684,37 @@ public class TransactionManager extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel1)
-                                    .addComponent(chooseAccountInPaymentComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel3)
-                                    .addComponent(paymentAccountNumberLabel))
-                                .addGap(13, 13, 13)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel4)
-                                    .addComponent(paymentAccountHolder))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel5)
-                                    .addComponent(paymentAccountBalanceLabel)))
-                            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(18, 18, 18))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(getTransactionsJLable, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(chooseAccountInPaymentComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(paymentAccountNumberLabel))
+                        .addGap(13, 13, 13)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(paymentAccountHolder))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel5)
+                            .addComponent(paymentAccountBalanceLabel)))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        paymentAccountNumberLabel.getAccessibleContext().setAccessibleName("paymetAccountNumberLabel");
-        paymentAccountHolder.getAccessibleContext().setAccessibleName("paymentAccountHolderLabel");
+        paymentAccountNumberLabel.getAccessibleContext().setAccessibleName(bundle.getString("TransactionManager.paymentAccountNumberLabel.AccessibleContext.accessibleName")); // NOI18N
+        paymentAccountHolder.getAccessibleContext().setAccessibleName(bundle.getString("TransactionManager.paymentAccountHolder.AccessibleContext.accessibleName")); // NOI18N
 
-        jTransactionManagerTabbedPane.addTab("Transactions", jPanel2);
+        jTransactionManagerTabbedPane.addTab(bundle.getString("TransactionManager.jPanel2.TabConstraints.tabTitle"), jPanel2); // NOI18N
 
-        jMenuFile.setText("File");
+        jMenuFile.setText(bundle.getString("TransactionManager.jMenuFile.text")); // NOI18N
 
-        jAccountsSummaryButtonInMenu.setText("Accounts summary");
+        jAccountsSummaryButtonInMenu.setText(bundle.getString("TransactionManager.jAccountsSummaryButtonInMenu.text")); // NOI18N
         jAccountsSummaryButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jAccountsSummaryButtonInMenuActionPerformed(evt);
@@ -785,7 +722,7 @@ public class TransactionManager extends javax.swing.JFrame {
         });
         jMenuFile.add(jAccountsSummaryButtonInMenu);
 
-        jTransactionsSummaryButtonInMenu.setText("Transactions summary");
+        jTransactionsSummaryButtonInMenu.setText(bundle.getString("TransactionManager.jTransactionsSummaryButtonInMenu.text")); // NOI18N
         jTransactionsSummaryButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTransactionsSummaryButtonInMenuActionPerformed(evt);
@@ -794,7 +731,7 @@ public class TransactionManager extends javax.swing.JFrame {
         jMenuFile.add(jTransactionsSummaryButtonInMenu);
         jMenuFile.add(jSeparator2);
 
-        jExitButtonInMenu.setText("Exit");
+        jExitButtonInMenu.setText(bundle.getString("TransactionManager.jExitButtonInMenu.text")); // NOI18N
         jExitButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jExitButtonInMenuActionPerformed(evt);
@@ -804,9 +741,9 @@ public class TransactionManager extends javax.swing.JFrame {
 
         MainJMenuBar.add(jMenuFile);
 
-        jMenuNew.setText("New");
+        jMenuNew.setText(bundle.getString("TransactionManager.jMenuNew.text")); // NOI18N
 
-        jMakePaymentButtonInMenu.setText("Make a Payment");
+        jMakePaymentButtonInMenu.setText(bundle.getString("TransactionManager.jMakePaymentButtonInMenu.text")); // NOI18N
         jMakePaymentButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMakePaymentButtonInMenuActionPerformed(evt);
@@ -814,7 +751,7 @@ public class TransactionManager extends javax.swing.JFrame {
         });
         jMenuNew.add(jMakePaymentButtonInMenu);
 
-        jMenuCreateNewAccountButtonInMenu.setText("Create new account");
+        jMenuCreateNewAccountButtonInMenu.setText(bundle.getString("TransactionManager.jMenuCreateNewAccountButtonInMenu.text")); // NOI18N
         jMenuCreateNewAccountButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuCreateNewAccountButtonInMenuActionPerformed(evt);
@@ -824,9 +761,9 @@ public class TransactionManager extends javax.swing.JFrame {
 
         MainJMenuBar.add(jMenuNew);
 
-        jMenuAbout.setText("About");
+        jMenuAbout.setText(bundle.getString("TransactionManager.jMenuAbout.text")); // NOI18N
 
-        jAboutButtonInMenu.setText("About");
+        jAboutButtonInMenu.setText(bundle.getString("TransactionManager.jAboutButtonInMenu.text")); // NOI18N
         jAboutButtonInMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jAboutButtonInMenuActionPerformed(evt);
@@ -845,7 +782,7 @@ public class TransactionManager extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jTransactionManagerTabbedPane)
-                .addGap(37, 37, 37))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -883,14 +820,14 @@ public class TransactionManager extends javax.swing.JFrame {
         frame.setTitle("About transaction manager");
             
         JLabel info = new JLabel();
-        info.setFont((new java.awt.Font("Times New Roman", 4, 20)));
+//        info.setFont((new java.awt.Font("Times New Roman", 4, 20)));
         info.setText("<html>Application transaction manager allows you to create <br> new accounts "
-                + "and payment from and to these accounts. <br> You can also modify and delete accounts <br> <br> <html>");
+                + "and payments from and to these accounts. <br> You can also modify and delete accounts <br> <br> <html>");
            
         frame.add(info, BorderLayout.NORTH);
               
         JLabel credits = new JLabel();
-        credits.setFont((new java.awt.Font("Arial", 3, 18)));
+//        credits.setFont((new java.awt.Font("Arial", 3, 18)));
         credits.setText("Credits: Viktória Tóthova and Miroslav Kubus");
         frame.add(credits, BorderLayout.SOUTH);
             
@@ -961,7 +898,7 @@ public class TransactionManager extends javax.swing.JFrame {
             UpdateAccountSwingWorker updateAccount = new UpdateAccountSwingWorker(acc, index);
             updateAccount.execute();
         } else {
-            deleteAccountJLabel.setText("Choose account to be update from table");
+            JOptionPane.showMessageDialog(null, java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("CHOOSE ACCOUNT TO BE UPDATE FROM TABLE"), "Message", JOptionPane.INFORMATION_MESSAGE);
         }
     }//GEN-LAST:event_updateAccountButtonActionPerformed
 
@@ -1031,7 +968,7 @@ public class TransactionManager extends javax.swing.JFrame {
             createAccountSwingWorker.execute();
             
         } catch (NumberFormatException ex) {
-            createAccountExceptionLabel.setText("Bad format of balance of account to be created");
+            JOptionPane.showMessageDialog(null, java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("BAD FORMAT OF BALANCE OF ACCOUNT TO BE CREATED"), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -1068,7 +1005,7 @@ public class TransactionManager extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(() -> {
             JFrame frame = new TransactionManager();
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setTitle("Transaction Manager");
+            frame.setTitle(java.util.ResourceBundle.getBundle("cz/muni/fi/pv168/transactionmanager/swing/Bundle").getString("TRANSACTION MANAGER"));
             frame.setVisible(true);
          
         });
@@ -1080,17 +1017,12 @@ public class TransactionManager extends javax.swing.JFrame {
     private javax.swing.JTextField accountHolderTextField;
     private javax.swing.JTextField accountNumberTextField;
     private javax.swing.JComboBox<String> chooseAccountInPaymentComboBox;
-    private javax.swing.JLabel chooseAccountInPaymentJLabel;
     private javax.swing.JTextField createAccountBalanceTextField;
     private javax.swing.JButton createAccountButton;
-    private javax.swing.JLabel createAccountExceptionLabel;
     private javax.swing.JTextField createAccountHolderTextField;
     private javax.swing.JTextField createAccountNumberTextField;
     private javax.swing.JButton createPaymentButton;
-    private javax.swing.JLabel createPaymentJLabel;
     private javax.swing.JButton deleteAccountButton;
-    private javax.swing.JLabel deleteAccountJLabel;
-    private javax.swing.JLabel getTransactionsJLable;
     private javax.swing.JCheckBox incomingTransactionCheckBox;
     private javax.swing.JMenuItem jAboutButtonInMenu;
     private javax.swing.JTable jAccountTable;
