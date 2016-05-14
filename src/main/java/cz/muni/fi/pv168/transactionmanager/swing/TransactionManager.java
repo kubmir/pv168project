@@ -6,15 +6,12 @@ import cz.muni.fi.pv168.transactionmanager.Payment;
 import cz.muni.fi.pv168.transactionmanager.PaymentManagerImpl;
 import cz.muni.fi.pv168.utils.DBUtils;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.sql.DataSource;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -31,7 +28,6 @@ public class TransactionManager extends javax.swing.JFrame {
     private AccountManagerImpl accountManager;
     private final DataSource dataSource;
     private PaymentManagerImpl paymentManager;
-    private Account account;
     private final AccountTableModel accountModel;
     private PaymentTableModel paymentModel;
     
@@ -49,6 +45,11 @@ public class TransactionManager extends javax.swing.JFrame {
     }
         
     private class CreateAccountSwingWorker extends SwingWorker<Void, Void> {
+        private Account account;
+        
+        public CreateAccountSwingWorker(Account toCreate) {
+            account = toCreate;
+        }
 
         @Override
         protected Void doInBackground() throws Exception {
@@ -96,15 +97,18 @@ public class TransactionManager extends javax.swing.JFrame {
     }
     
     private class DeleteAccountSwingWorker extends SwingWorker<Void, Void> {
-        private int index;
+        private final int index;
+        private Account account;
         
-        public DeleteAccountSwingWorker(int index) {
+        public DeleteAccountSwingWorker(int index, Account account) {
             this.index = index;
+            this.account = account;
         }
+        
         @Override
         protected Void doInBackground() throws Exception {
-            account = accountManager.getAccountById(account.getId());
             accountManager.deleteAccount(account);
+            accountModel.removeRow(index);
             return null;
         }
         
@@ -113,7 +117,6 @@ public class TransactionManager extends javax.swing.JFrame {
             try {
                 this.get();
                 JOptionPane.showMessageDialog(null, "Account deleted", "Message", JOptionPane.INFORMATION_MESSAGE);
-                accountModel.removeRow(index);
             } catch (InterruptedException | ExecutionException ex) {
                 JOptionPane.showMessageDialog(null, ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -871,10 +874,10 @@ public class TransactionManager extends javax.swing.JFrame {
 
     private void deleteAccountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAccountButtonActionPerformed
         int i = jAccountTable.getSelectedRow();
-        
+        Account account = new Account();
         if(i >= 0) {
-            //account.setId((Long) jAccountTable.getValueAt(i, 0));
-            DeleteAccountSwingWorker deleteAccountSwingWorker = new DeleteAccountSwingWorker(i);
+            account.setId((Long) jAccountTable.getValueAt(i, 0));
+            DeleteAccountSwingWorker deleteAccountSwingWorker = new DeleteAccountSwingWorker(i, account);
             deleteAccountSwingWorker.execute();
         }
     }//GEN-LAST:event_deleteAccountButtonActionPerformed
@@ -955,16 +958,15 @@ public class TransactionManager extends javax.swing.JFrame {
         String balanceText = createAccountBalanceTextField.getText();
         String number = createAccountNumberTextField.getText();
         String holder = createAccountHolderTextField.getText();
-
+        Account account = new Account();
         try {
             BigDecimal balance = new BigDecimal(balanceText);
             
-            account = new Account();
             account.setBalance(balance);
             account.setHolder(holder);
             account.setNumber(number);
             
-            CreateAccountSwingWorker createAccountSwingWorker = new CreateAccountSwingWorker();
+            CreateAccountSwingWorker createAccountSwingWorker = new CreateAccountSwingWorker(account);
             createAccountSwingWorker.execute();
             
         } catch (NumberFormatException ex) {
